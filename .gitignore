@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+*.filters
+*.user
+Samples/.vs/
+Samples/Debug/
