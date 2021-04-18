@@ -34,3 +34,5 @@
 *.user
 Samples/.vs/
 Samples/Debug/
+/AoCCore/obj
+/AoCCore/bin/Debug
