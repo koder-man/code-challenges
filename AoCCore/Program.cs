@@ -1,10 +1,10 @@
 ﻿namespace AoCCore
 {
-  class Program
-  {
-    static void Main(string[] args)
+    class Program
     {
-      Y2020.Current();
+        static void Main(string[] args)
+        {
+            Y2022.Current();
+        }
     }
-  }
 }
