@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -327,39 +328,86 @@ public static class Y2022
         Console.WriteLine("what");
     }
 
-    public static void CurrentA()
+    public static void Day07A()
     {
-        var max = 0L;
-        while (true)
-        {
-            var sum = Read.LongBatch().Sum();
-            if (sum == 0) { break; }
-
-            if (sum > max) { max = sum; }
-        }
-        Console.WriteLine(max);
-
-        var all = new List<long>();
-        foreach (var batch in Read.LongBatches())
-        {
-            var sum = batch.Sum();
-            if (sum == 0) { break; }
-
-            all.Add(sum);
-        }
-        Console.WriteLine(all.OrderDescending().Take(3).Sum());
-
-        var lines = new List<string>();
+        var all = new Dictionary<string, long>();
+        var path = new Stack<string>();
         foreach (var line in Read.StringBatch())
         {
-            if (char.IsDigit(line[1])) break;
+            if (line[0] == '$')
+            {
+                switch (line.Substring(2, 2))
+                {
+                    case "cd":
+                        if (line[5] == '.')
+                            path.Pop();
+                        else
+                        {
+                            path.Push(line.Substring(5));
+                            all.Add(string.Join('\\', path.Reverse()), 0);
+                        }
+                        continue;
+                    case "ls":
+                        continue;
+                    default:
+                        throw new Exception("invalid command");
+                }
+            }
 
-            lines.Add(line);
+            if (line.StartsWith("dir")) continue;
+
+            long size = long.Parse(line[..line.IndexOf(' ')]);
+            for (int i = 0; i < path.Count; i++)
+            {
+                all[string.Join('\\', path.Reverse().Take(i + 1))] += size;
+            }
         }
-        Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
+
+        Console.WriteLine(all.Values.Where(x => x <= 100000).Sum());
     }
 
-    public static void CurrentB()
+    public static void Day07B()
+    {
+        var all = new Dictionary<string, long>();
+        var path = new Stack<string>();
+        foreach (var line in Read.StringBatch())
+        {
+            if (line[0] == '$')
+            {
+                switch (line.Substring(2, 2))
+                {
+                    case "cd":
+                        if (line[5] == '.')
+                            path.Pop();
+                        else
+                        {
+                            path.Push(line.Substring(5));
+                            all.Add(string.Join('\\', path.Reverse()), 0);
+                        }
+                        continue;
+                    case "ls":
+                        continue;
+                    default:
+                        throw new Exception("invalid command");
+                }
+            }
+
+            if (line.StartsWith("dir")) continue;
+
+            long size = long.Parse(line[..line.IndexOf(' ')]);
+            for (int i = 0; i < path.Count; i++)
+            {
+                all[string.Join('\\', path.Reverse().Take(i + 1))] += size;
+            }
+        }
+
+
+        var total = all["/"];
+        var freeUp = total - 40_000_000;
+        Console.WriteLine(all.Values.Where(x => x >= freeUp).Order().First());
+    }
+
+    public static void Current()
     {
         var max = 0L;
         while (true)
