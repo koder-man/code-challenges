@@ -407,6 +407,138 @@ public static class Y2022
         Console.WriteLine(all.Values.Where(x => x >= freeUp).Order().First());
     }
 
+    public static void Day08A()
+    {
+        var lines = Read.StringBatch().ToArray();
+
+        var sum = 0L;
+        for (var i = 0; i < lines.Length; i++)
+        {
+            int l = lines[i].Length;
+            for (var j = 0; j < l; j++)
+            {
+                if (i == 0 || j == 0 || i == lines.Length - 1 || j == l - 1) { sum++; continue; }
+
+                var h = lines[i][j];
+
+                // row
+                var isTallest = true;
+                for (var x = 0; x < j; x++)
+                {
+                    if (lines[i][x] < h) continue;
+
+                    isTallest = false;
+                }
+                if (isTallest)
+                {
+                    sum++;
+                    continue;
+                }
+                // row
+                isTallest = true;
+                for (var x = j + 1; x < l; x++)
+                {
+                    if (lines[i][x] < h) continue;
+
+                    isTallest = false;
+                }
+                if (isTallest)
+                {
+                    sum++;
+                    continue;
+                }
+
+                // col
+                isTallest = true;
+                for (var x = 0; x < i; x++)
+                {
+                    if (lines[x][j] < h) continue;
+
+                    isTallest = false;
+                }
+                if (isTallest)
+                {
+                    sum++;
+                    continue;
+                }
+                // col
+                isTallest = true;
+                for (var x = i + 1; x < lines.Length; x++)
+                {
+                    if (lines[x][j] < h) continue;
+
+                    isTallest = false;
+                }
+                if (isTallest)
+                {
+                    sum++;
+                    continue;
+                }
+            }
+        }
+
+        Console.WriteLine(sum);
+    }
+
+    public static void Day08B()
+    {
+        var lines = Read.StringBatch().ToArray();
+
+        var max = 0L;
+        for (var i = 1; i < lines.Length - 1; i++)
+        {
+            int l = lines[i].Length;
+            for (var j = 1; j < l - 1; j++)
+            {
+                var h = lines[i][j];
+
+                var current = 1L;
+                // row
+                var cnt = 0;
+                for (var x = j - 1; x >= 0; x--)
+                {
+                    cnt++;
+                    if (lines[i][x] >= h) break;
+                }
+                current *= cnt;
+                // row
+                cnt = 0;
+                for (var x = j + 1; x < l; x++)
+                {
+                    cnt++;
+                    if (lines[i][x] >= h) break;
+                }
+                current *= cnt;
+
+                // col
+                cnt = 0;
+                for (var x = i - 1; x >= 0; x--)
+                {
+                    cnt++;
+                    if (lines[x][j] >= h) break;
+                }
+                current *= cnt;
+                // col
+                cnt = 0;
+                for (var x = i + 1; x < lines.Length; x++)
+                {
+                    cnt++;
+                    if (lines[x][j] >= h) break;
+                }
+                current *= cnt;
+
+                if (current > max)
+                {
+                    max = current;
+                    Console.WriteLine($"{i}-{j} {current}");
+                }
+            }
+        }
+
+        Console.WriteLine(max);
+    }
+
+    // Day09A
     public static void Current()
     {
         var max = 0L;
@@ -438,6 +570,7 @@ public static class Y2022
         }
         Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
     }
+    // Day09B
 
     public static void CurrentSample()
     {
