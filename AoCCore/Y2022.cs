@@ -538,8 +538,125 @@ public static class Y2022
         Console.WriteLine(max);
     }
 
-    // Day09A
-    public static void Current()
+    public static void Day09A()
+    {
+        var visited = new HashSet<(int X, int Y)>();
+        (int X, int Y) h = (0, 0);
+        var t = h;
+        foreach (var line in Read.StringBatch())
+        {
+            var move = int.Parse(line[2..]);
+            var x = 0;
+            var y = 0;
+            switch (line[0])
+            {
+                case 'R': x = 1; break;
+                case 'L': x = -1; break;
+                case 'D': y = 1; break;
+                case 'U': y = -1; break;
+                default: throw new Exception(line);
+            }
+
+            for (int i = 0; i < move; i++) Add(x, y);
+
+            void Add(int x, int y)
+            {
+                h = (h.X + x, h.Y + y);
+
+                if (Math.Abs(h.X - t.X) + Math.Abs(h.Y - t.Y) == 3) { t.X += h.X > t.X ? 1 : -1; t.Y += h.Y > t.Y ? 1 : -1; }
+                if (Math.Abs(h.X - t.X) > 1) t.X += h.X > t.X ? 1 : -1;
+                if (Math.Abs(h.Y - t.Y) > 1) t.Y += h.Y > t.Y ? 1 : -1;
+
+                visited.Add(t);
+
+                Console.WriteLine($"{line}: {x}, {y}. h: {h}  t: {t} count: {visited.Count}");
+            }
+        }
+
+        Console.WriteLine(visited.Count);
+    }
+
+    public static void Day09B()
+    {
+        var visited = new HashSet<(int X, int Y)>();
+        //var visited = new Dictionary<(int X, int Y), char>();
+        var s = new (int X, int Y)[1 + 9];
+        var screenX = (-5, 20);
+        var screenY = (-30, 10);
+
+        foreach (var line in Read.StringBatch())
+        {
+            var move = int.Parse(line[2..]);
+            var x = 0;
+            var y = 0;
+            switch (line[0])
+            {
+                case 'R': x = 1; break;
+                case 'L': x = -1; break;
+                case 'D': y = 1; break;
+                case 'U': y = -1; break;
+                default: throw new Exception(line);
+            }
+
+            // Console.WriteLine($"{line} {x}, {y}");
+            for (int i = 0; i < move; i++)
+            {
+                // Console.WriteLine($"  {i}");
+                Add(x, y, 0);
+            }
+
+            void Add(int x, int y, int i)
+            {
+                s[i] = (s[i].X + x, s[i].Y + y);
+
+                if (i == 9)
+                {
+                    visited.Add(s[i]);
+                    /*visited[s[i]] = (x, y) switch
+                    {
+                        (0, 1) or (0, -1) => '|',
+                        (1, 1) or (-1, -1) => '/',
+                        (1, 0) or (-1, 0) => '-',
+                        (1, -1) or (-1, 1) => '\\',
+                        _ => 'o',
+                    };*/
+
+                    Console.SetCursorPosition(0, 0);
+                    screenX = (Math.Min(s[0].X, screenX.Item1), Math.Max(s[0].X, screenX.Item2));
+                    screenY = (Math.Min(s[0].Y, screenY.Item1), Math.Max(s[0].Y, screenY.Item2));
+                    var items = new Dictionary<(int, int), char>();
+                    foreach (var item in visited) items[(item)] = '*';
+                    // foreach (var item in visited) items[(item.Key)] = item.Value;
+                    for (var si = s.Length - 1; si >= 0; si--) items[s[si]] = (char)('0' + si);
+                    for (int dy = screenY.Item1; dy <= screenY.Item2; dy++)
+                    {
+                        Console.WriteLine(new string(
+                            Enumerable.Range(screenX.Item1, screenX.Item2 - screenX.Item1)
+                                .Select(x => items.TryGetValue((x, dy), out var value) ? value : ' ')
+                                .ToArray()));
+                    }
+                    // System.Threading.Thread.Sleep(10);
+
+                    return;
+                }
+
+                var xt = 0;
+                var yt = 0;
+
+                if (Math.Abs(s[i].X - s[i + 1].X) + Math.Abs(s[i].Y - s[i + 1].Y) >= 3) { xt = s[i].X > s[i + 1].X ? 1 : -1; yt = s[i].Y > s[i + 1].Y ? 1 : -1; }
+                else if (Math.Abs(s[i].X - s[i + 1].X) > 1) xt = s[i].X > s[i + 1].X ? 1 : -1;
+                else if (Math.Abs(s[i].Y - s[i + 1].Y) > 1) yt = s[i].Y > s[i + 1].Y ? 1 : -1;
+
+                // Console.WriteLine($"    i:{i}. {xt}, {yt}. count: {visited.Count}. s: {string.Join(',', s)}");
+
+                Add(xt, yt, i + 1);
+            }
+        }
+
+        Console.WriteLine(visited.Count);
+    }
+
+    public static void Current() // Day10A()
     {
         var max = 0L;
         while (true)
@@ -570,7 +687,6 @@ public static class Y2022
         }
         Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
     }
-    // Day09B
 
     public static void CurrentSample()
     {

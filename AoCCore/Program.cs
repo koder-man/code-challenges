@@ -1,10 +1,19 @@
-﻿namespace AoCCore
+﻿using System;
+
+namespace AoCCore
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Y2022.Current();
+            while (true)
+            {
+                Y2022.Current();
+
+                Console.WriteLine();
+                Console.WriteLine("Paste data again..");
+                Console.WriteLine();
+            }
         }
     }
 }
