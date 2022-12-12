@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace AoCCore;
 
@@ -656,7 +652,404 @@ public static class Y2022
         Console.WriteLine(visited.Count);
     }
 
-    public static void Current() // Day10A()
+    public static void Day10A()
+    {
+        var sum = 0L;
+        var cycle = 0;
+        var x = 1L;
+        foreach (var line in Read.StringBatch())
+        {
+            if (line == "noop")
+            {
+                Increment();
+                continue;
+            }
+
+            var val = int.Parse(line.Substring(5));
+            Increment();
+            Increment();
+            x += val;
+        }
+
+        Console.WriteLine(sum);
+
+        void Increment()
+        {
+            cycle++;
+
+            if ((cycle + 20) % 40 == 0 && cycle <= 220)
+            {
+                sum += cycle * x;
+            }
+        }
+    }
+
+    public static void Day10B()
+    {
+        var cycle = 0;
+        var x = 1L;
+        var screen = new bool[240];
+        foreach (var line in Read.StringBatch())
+        {
+            if (line == "noop")
+            {
+                Draw();
+                continue;
+            }
+
+            var val = int.Parse(line.Substring(5));
+            Draw();
+            Draw();
+            x += val;
+        }
+
+        for (int i = 0; i < 6; i++)
+        {
+            Console.WriteLine(new string(screen.Skip(i * 40).Take(40).Select(b => b ? '#' : '.').ToArray()));
+        }
+
+        void Draw()
+        {
+            cycle++;
+
+            if (Math.Abs((cycle - 1) % 40 - x) <= 1) screen[cycle - 1] = true;
+        }
+    }
+
+    public static void Day10Bx()
+    {
+        var cycle = 0;
+        var reg = 1L;
+        string[] lines = Read.StringBatch().ToArray();
+        Console.WriteLine();
+        var offset = Console.CursorTop;
+
+        foreach (var line in lines)
+        {
+            if (line == "noop")
+            {
+                Draw();
+                continue;
+            }
+
+            var val = int.Parse(line.Substring(5));
+            Draw();
+            Draw();
+            reg += val;
+
+            void Draw()
+            {
+                cycle++;
+
+                Console.WriteLine($"Command:            {line}    ");
+                Console.WriteLine($"Cycle:              {cycle}");
+                Console.WriteLine();
+
+                Console.WriteLine($"Sprite position:    {new string(Enumerable.Range(0, 40).Select(x => Math.Abs(x - reg) <= 1 ? '#' : '.').ToArray())}");
+                Console.WriteLine();
+
+                Console.Write(Math.Abs((cycle - 1) % 40 - reg) <= 1 ? '#' : '.');
+                if (cycle % 40 == 0) Console.WriteLine();
+                System.Threading.Thread.Sleep(10);
+                // if (Math.Abs((cycle - 1) % 40 - x) <= 1) screen[cycle - 1] = true;
+            }
+        }
+
+        /*for (int i = 0; i < 6; i++)
+        {
+            Console.WriteLine(new string(screen.Skip(i * 40).Take(40).Select(b => b ? '#' : '.').ToArray()));
+        }*/
+    }
+
+    public static void Day11A()
+    {
+        var monkeys = new List<Monkey11A>();
+
+        while (true)
+        {
+            string[] def = Read.StringBatch().ToArray();
+            if (def.Length == 0) break;
+
+            var items = def[1][18..].Split(", ").Select(int.Parse);
+            string byVal = def[2][25..];
+            Func<int, int> operation = def[2][23] == '*'
+                ? val => val * (byVal == "old" ? val : int.Parse(byVal))
+                : val => val + (byVal == "old" ? val : int.Parse(byVal));
+
+            monkeys.Add(new Monkey11A(items, operation, int.Parse(def[3][21..]), int.Parse(def[4][29..]), int.Parse(def[5][30..])));
+        }
+
+        for (int i = 0; i < 20; i++)
+        {
+            foreach (var m in monkeys) Console.WriteLine(m);
+
+            foreach (var monkey in monkeys)
+            {
+                while (monkey.CanProcess())
+                    monkeys[monkey.Test(out var newLevel)].Enqueeu(newLevel);
+            }
+        }
+
+        foreach (var m in monkeys) Console.WriteLine(m);
+
+        var maxes = monkeys.Select(m => m.Inspections).OrderDescending().Take(2).ToArray();
+        Console.WriteLine(maxes[0] * maxes[1]);
+    }
+
+    private class Monkey11A
+    {
+        private readonly Queue<int> items = new Queue<int>();
+        private readonly Func<int, int> operation;
+        private readonly int divisibleBy;
+        private readonly int toIfTrue;
+        private readonly int toIfFalse;
+
+        public Monkey11A(IEnumerable<int> items, Func<int, int> operation, int divisibleBy, int toIfTrue, int toIfFalse)
+        {
+            this.items = new Queue<int>(items);
+            this.operation = operation;
+            this.divisibleBy = divisibleBy;
+            this.toIfTrue = toIfTrue;
+            this.toIfFalse = toIfFalse;
+        }
+
+        public long Inspections { get; private set; }
+
+        public bool CanProcess() => items.Any();
+
+        public int Test(out int newLevel)
+        {
+            Inspections++;
+            newLevel = items.Dequeue();
+            newLevel = operation(newLevel);
+            newLevel /= 3;
+            return newLevel % divisibleBy == 0 ? toIfTrue : toIfFalse;
+        }
+
+        public void Enqueeu(int level) => items.Enqueue(level);
+
+        public override string ToString()
+        {
+            return $"{Inspections}, {items.Count}: ({string.Join(',', items)}), {divisibleBy}, {toIfTrue}, {toIfFalse}";
+        }
+    }
+
+    public static void Day11B()
+    {
+        var input = new List<(IEnumerable<int> Items, bool IsMult, int? ByVal, int DivisableBy, int IfTrue, int IfFalse)>();
+        foreach (var def in Read.StringBatches())
+        {
+            var items = def[1][18..].Split(", ").Select(int.Parse);
+            string byVal = def[2][25..];
+
+            input.Add((items, def[2][23] == '*', byVal == "old" ? null : int.Parse(byVal), int.Parse(def[3][21..]), int.Parse(def[4][29..]), int.Parse(def[5][30..])));
+        }
+
+        var divisors = input.Select(x => x.DivisableBy).ToArray();
+        var monkeys = input.Select(x => new Monkey11B(divisors, x.Items, x.IsMult, x.ByVal, x.DivisableBy, x.IfTrue, x.IfFalse)).ToArray();
+
+        for (int i = 0; i < 10000; i++)
+        {
+            if (i % 100 == 0) Console.WriteLine(i);
+            if (i == 1 || i == 20 || i == 1000)
+            {
+                Console.WriteLine(i);
+                foreach (var m in monkeys) Console.WriteLine(m);
+            }
+
+            foreach (var monkey in monkeys)
+            {
+                while (monkey.CanProcess())
+                    monkeys[monkey.Test(out var newLevel)].Enqueeu(newLevel);
+            }
+        }
+
+        foreach (var m in monkeys) Console.WriteLine(m);
+
+        var maxes = monkeys.Select(m => m.Inspections).OrderDescending().Take(2).ToArray();
+        Console.WriteLine(maxes[0] * maxes[1]);
+    }
+
+    private class Monkey11B
+    {
+        private readonly Queue<Level> items = new Queue<Level>();
+        private readonly bool isMult;
+        private readonly int? byValue;
+        private readonly int divisibleBy;
+        private readonly int toIfTrue;
+        private readonly int toIfFalse;
+
+        public Monkey11B(IEnumerable<int> divisors, IEnumerable<int> items, bool isMult, int? byValue, int divisibleBy, int toIfTrue, int toIfFalse)
+        {
+            this.items = new Queue<Level>(items.Select(x => new Level(divisors, x)));
+            this.isMult = isMult;
+            this.byValue = byValue;
+            this.divisibleBy = divisibleBy;
+            this.toIfTrue = toIfTrue;
+            this.toIfFalse = toIfFalse;
+        }
+
+        public long Inspections { get; private set; }
+
+        public bool CanProcess() => items.Any();
+
+        public int Test(out Level newLevel)
+        {
+            Inspections++;
+            newLevel = items.Dequeue();
+            if (isMult)
+            {
+                if (byValue.HasValue)
+                    newLevel.Mult(byValue.Value);
+                else
+                    newLevel.MultBySelf();
+            }
+            else
+            {
+                if (byValue.HasValue)
+                    newLevel.Add(byValue.Value);
+                else
+                    newLevel.AddSelf();
+            }
+
+            return newLevel.IsDevisibleBy(divisibleBy) ? toIfTrue : toIfFalse;
+        }
+
+        public void Enqueeu(Level level) => items.Enqueue(level);
+
+        public override string ToString()
+        {
+            return $"{Inspections}, {items.Count}: ({string.Join(", ", items)}), {divisibleBy}, {toIfTrue}, {toIfFalse}";
+        }
+
+        public class Level
+        {
+            public Dictionary<int, int> Reminders { get; } = new();
+
+            public Level(IEnumerable<int> divisors, int value)
+            {
+                foreach (var item in divisors)
+                {
+                    Set(item, value);
+                }
+            }
+
+            public void Mult(int value)
+            {
+                foreach (var item in Reminders)
+                {
+                    Set(item.Key, item.Value * value);
+                }
+            }
+
+            public void MultBySelf()
+            {
+                foreach (var item in Reminders)
+                {
+                    Set(item.Key, item.Value * item.Value);
+                }
+            }
+
+            public void Add(int value)
+            {
+                foreach (var item in Reminders)
+                {
+                    Set(item.Key, item.Value + value);
+                }
+            }
+
+            public void AddSelf()
+            {
+                Mult(2);
+            }
+
+            public bool IsDevisibleBy(int value) => Reminders[value] == 0;
+
+            private void Set(int divisor, int value) => Reminders[divisor] = value % divisor;
+
+            public override string ToString()
+            {
+                return string.Join('*', Reminders.Select(x => $"{x.Key}:{x.Value}"));
+            }
+        }
+    }
+
+    public static void Day12A() // ne dela
+    {
+        var input = Read.StringBatch().ToArray();
+        var parsed = input.Select(x => (H: x, Visited: false)).ToArray();
+        // var lines = new (char H, bool Visited)[input.Length, input[0].Length];
+
+        var S = input.Select((h, y) => new Point12A(h.IndexOf('S'), y)).First(x => x.X != -1);
+        var E = input.Select((h, y) => new Point12A(h.IndexOf('E'), y)).First(x => x.X != -1);
+
+        var h = input.Length;
+        var w = input[0].Length;
+
+        var queue = new Queue<Point12A[]>();
+        queue.Enqueue(new[] { S, });
+
+        var minPathLength = int.MaxValue;
+        Point12A[] minPath = null;
+
+        while (queue.TryDequeue(out var path))
+        {
+            if (path.Length >= minPathLength) continue;
+
+            var map = new bool[w, h];
+            foreach (var part in path)
+            {
+                map[part.X, part.Y] = true;
+            }
+
+            var current = path.Last();
+            var e = Elevation(current);
+
+            var candidates = new List<(Point12A, char)>();
+            if (current.X > 0) Try(-1, 0);
+            if (current.X < w - 1) Try(1, 0);
+            if (current.Y > 0) Try(0, -1);
+            if (current.Y < h - 1) Try(0, 1);
+
+            foreach (var dest in candidates.OrderByDescending(x => x.Item2))
+                queue.Enqueue(path.Append(dest.Item1).ToArray());
+
+            void Try(int dx, int dy)
+            {
+                var dest = current.Move(dx, dy);
+
+                if (!map[dest.X, dest.Y])
+                {
+                    var destE = Elevation(dest);
+                    if (destE <= e + 1)
+                    {
+                        if (dest == E)
+                        {
+                            if (path.Length < minPathLength)
+                            {
+                                minPathLength = path.Length;
+                                minPath = path;
+                            }
+
+                            return;
+                        }
+                        candidates.Add((dest, destE));
+                    }
+                }
+            }
+        }
+
+        Console.WriteLine(minPathLength);
+        foreach (var p in minPath) Console.WriteLine($"{p}: {Elevation(p)}");
+
+        char Elevation(Point12A p) => p == S ? 'a' : p == E ? 'z' : input[p.Y][p.X];
+    }
+    private record struct Point12A(int X, int Y)
+    {
+        public Point12A Move(int dx, int dy) => new(X + dx, Y + dy);
+    }
+
+    public static void Current() // Day13A
     {
         var max = 0L;
         while (true)
@@ -688,7 +1081,7 @@ public static class Y2022
         Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
     }
 
-    public static void CurrentSample()
+    public static void CurrentSample() // Day1xA
     {
         var max = 0L;
         while (true)

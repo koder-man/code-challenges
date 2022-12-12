@@ -27,12 +27,21 @@ internal static class Read
         }
     }
 
+    public static IEnumerable<string[]> StringBatches()
+    {
+        while (true)
+        {
+            var batch = StringBatch().ToArray();
+
+            if (batch.Length == 0) yield break;
+
+            yield return batch;
+        }
+    }
+
     public static IEnumerable<T> Batch<T>() where T : IParsable<T> => StringBatch().Select(x => T.Parse(x, null));
 
-    public static IEnumerable<IEnumerable<T>> Batches<T>() where T : IParsable<T>
-    {
-        while (true) yield return Batch<T>();
-    }
+    public static IEnumerable<T[]> Batches<T>() where T : IParsable<T> => StringBatches().Select(x => x.Select(v => T.Parse(v, null)).ToArray());
 
     public static int Int() => Value<int>();
 
@@ -40,7 +49,7 @@ internal static class Read
 
     public static IEnumerable<int> IntBatch() => Batch<int>();
 
-    public static IEnumerable<IEnumerable<int>> IntBatches() => Batches<int>();
+    public static IEnumerable<int[]> IntBatches() => Batches<int>();
 
     public static long Long() => Value<long>();
 
@@ -48,5 +57,5 @@ internal static class Read
 
     public static IEnumerable<long> LongBatch() => Batch<long>();
 
-    public static IEnumerable<IEnumerable<long>> LongBatches() => Batches<long>();
+    public static IEnumerable<long[]> LongBatches() => Batches<long>();
 }
