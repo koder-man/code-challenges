@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Windows.Markup;
 
 namespace AoCCore;
 
@@ -980,17 +982,17 @@ public static class Y2022
         var parsed = input.Select(x => (H: x, Visited: false)).ToArray();
         // var lines = new (char H, bool Visited)[input.Length, input[0].Length];
 
-        var S = input.Select((h, y) => new Point12A(h.IndexOf('S'), y)).First(x => x.X != -1);
-        var E = input.Select((h, y) => new Point12A(h.IndexOf('E'), y)).First(x => x.X != -1);
+        var S = input.Select((h, y) => new Point(h.IndexOf('S'), y)).First(x => x.X != -1);
+        var E = input.Select((h, y) => new Point(h.IndexOf('E'), y)).First(x => x.X != -1);
 
         var h = input.Length;
         var w = input[0].Length;
 
-        var queue = new Queue<Point12A[]>();
+        var queue = new Queue<Point[]>();
         queue.Enqueue(new[] { S, });
 
         var minPathLength = int.MaxValue;
-        Point12A[] minPath = null;
+        Point[] minPath = null;
 
         while (queue.TryDequeue(out var path))
         {
@@ -1005,7 +1007,7 @@ public static class Y2022
             var current = path.Last();
             var e = Elevation(current);
 
-            var candidates = new List<(Point12A, char)>();
+            var candidates = new List<(Point, char)>();
             if (current.X > 0) Try(-1, 0);
             if (current.X < w - 1) Try(1, 0);
             if (current.Y > 0) Try(0, -1);
@@ -1042,14 +1044,567 @@ public static class Y2022
         Console.WriteLine(minPathLength);
         foreach (var p in minPath) Console.WriteLine($"{p}: {Elevation(p)}");
 
-        char Elevation(Point12A p) => p == S ? 'a' : p == E ? 'z' : input[p.Y][p.X];
-    }
-    private record struct Point12A(int X, int Y)
-    {
-        public Point12A Move(int dx, int dy) => new(X + dx, Y + dy);
+        char Elevation(Point p) => p == S ? 'a' : p == E ? 'z' : input[p.Y][p.X];
     }
 
-    public static void Current() // Day13A
+    public static void Day13A()
+    {
+        var indexes = new List<int>();
+        var i = 0;
+        foreach (var pair in Read.StringBatches())
+        {
+            i++;
+
+            var first = Parse(pair[0]);
+            var second = Parse(pair[1]);
+
+            var result = Value.CompareList(first, second);
+            Console.WriteLine(result);
+            if (result == -1) indexes.Add(i);
+        }
+        Console.WriteLine(indexes.Sum());
+
+        List<Value> Parse(string line)
+        {
+            var root = Value.Create();
+
+            var stack = new Stack<Value>();
+            stack.Push(root);
+
+            var ints = new List<char>();
+            bool inInts = false;
+            foreach (var c in line[1..])
+            {
+                if (ProcessInts(c)) continue;
+
+                switch (c)
+                {
+                    case '[':
+                        Value @new = Value.Create();
+                        stack.Peek().Values.Add(@new);
+                        stack.Push(@new);
+                        break;
+                    case ']':
+                        stack.Pop();
+                        break;
+                    case ',':
+                        break;
+                    default:
+                        inInts = true;
+                        ints.Add(c);
+                        break;
+                }
+            }
+
+            return root.Values;
+
+            bool ProcessInts(char c)
+            {
+                if (!inInts) return false;
+
+                if (char.IsDigit(c))
+                {
+                    ints.Add(c);
+                    return true;
+                }
+
+                if (c == ',' || c == ']')
+                {
+                    stack.Peek().Values.Add(Value.Create(int.Parse(new string(ints.ToArray()))));
+                    ints.Clear();
+                    inInts = false;
+                }
+
+                return false;
+            }
+        }
+    }
+
+    public static void Day13B()
+    {
+        var all = new List<Value>();
+        var d1 = Parse("[[2]]");
+        var d2 = Parse("[[6]]");
+        all.Add(d1);
+        all.Add(d2);
+
+        foreach (var pair in Read.StringBatches())
+        {
+            all.Add(Parse(pair[0]));
+            all.Add(Parse(pair[1]));
+        }
+
+        all.Sort();
+
+        var index1 = all.IndexOf(d1) + 1;
+        var index2 = all.IndexOf(d2) + 1;
+        Console.WriteLine($"{index1}, {index2}, {index1 * index2}");
+
+        Value Parse(string line)
+        {
+            var root = Value.Create();
+
+            var stack = new Stack<Value>();
+            stack.Push(root);
+
+            var ints = new List<char>();
+            bool inInts = false;
+            foreach (var c in line[1..])
+            {
+                if (ProcessInts(c)) continue;
+
+                switch (c)
+                {
+                    case '[':
+                        Value @new = Value.Create();
+                        stack.Peek().Values.Add(@new);
+                        stack.Push(@new);
+                        break;
+                    case ']':
+                        stack.Pop();
+                        break;
+                    case ',':
+                        break;
+                    default:
+                        inInts = true;
+                        ints.Add(c);
+                        break;
+                }
+            }
+
+            return root;
+
+            bool ProcessInts(char c)
+            {
+                if (!inInts) return false;
+
+                if (char.IsDigit(c))
+                {
+                    ints.Add(c);
+                    return true;
+                }
+
+                if (c == ',' || c == ']')
+                {
+                    stack.Peek().Values.Add(Value.Create(int.Parse(new string(ints.ToArray()))));
+                    ints.Clear();
+                    inInts = false;
+                }
+
+                return false;
+            }
+        }
+    }
+    private class Value : IComparable<Value>
+    {
+        public int? Int { get; init; }
+
+        public List<Value> Values { get; init; }
+
+        public bool IsInt => Int.HasValue;
+
+        public static Value Create(int value) => new() { Int = value, };
+        public static Value Create() => new() { Values = new(), };
+
+        public int CompareTo(Value r)
+        {
+            if (IsInt && r.IsInt) return Int.Value.CompareTo(r.Int.Value);
+
+            return CompareList(IsInt ? new[] { this, } : Values, r.IsInt ? new[] { r, } : r.Values);
+        }
+
+        public override string ToString()
+        {
+            return IsInt ? Int.ToString() : $"[{string.Join(',', Values)}]";
+        }
+
+        public static int CompareList(IReadOnlyList<Value> l, IReadOnlyList<Value> r)
+        {
+            var min = Math.Min(l.Count, r.Count);
+
+            for (int i = 0; i < min; i++)
+            {
+                switch (l[i].CompareTo(r[i]))
+                {
+                    case -1: return -1;
+                    case 0: continue;
+                    case 1: return 1;
+                    default: throw new Exception();
+                }
+            }
+
+            return l.Count == r.Count ? 0 : l.Count.CompareTo(r.Count);
+        }
+    }
+
+    public static void Day14A()
+    {
+        const char Rock = '#';
+        const char Sand = 'o';
+
+        var paths = Read.StringBatch().Select(line => line.Split(" -> ").Select(x => Parse(x)).ToArray()).ToArray();
+
+        Dictionary<Point, char> map = new();
+        foreach (var path in paths)
+        {
+            var previous = path.First();
+
+            foreach (var point in path.Skip(1))
+            {
+                if (previous.X == point.X)
+                {
+                    for (int i = Math.Min(previous.Y, point.Y); i <= Math.Max(previous.Y, point.Y); i++)
+                    {
+                        map[new(point.X, i)] = Rock;
+                    }
+                    previous = point;
+                    continue;
+                }
+                if (previous.Y == point.Y)
+                {
+                    for (int i = Math.Min(previous.X, point.X); i <= Math.Max(previous.X, point.X); i++)
+                    {
+                        map[new(i, point.Y)] = Rock;
+                    }
+                    previous = point;
+                    continue;
+                }
+                throw new Exception("not a line");
+            }
+        }
+
+        var bottom = paths.SelectMany(x => x).Max(x => x.Y);
+        var count = Process(bottom, map);
+        Console.WriteLine(count);
+
+        static int Process(int bottom, Dictionary<Point, char> map)
+        {
+            Point start = new(500, 0);
+            var count = 0;
+            while (true)
+            {
+                var current = start;
+
+                while (true)
+                {
+                    // down
+                    while (true)
+                    {
+                        var down = current.Move(0, 1);
+                        if (down.Y > bottom)
+                        {
+                            return count;
+                        }
+
+                        if (map.ContainsKey(down))
+                            break;
+
+                        current = down;
+                    }
+
+                    // down left
+                    var left = current.Move(-1, 1);
+                    if (!map.ContainsKey(left))
+                    {
+                        current = left;
+                        continue;
+                    }
+
+                    // down right
+                    var right = current.Move(1, 1);
+                    if (!map.ContainsKey(right))
+                    {
+                        current = right;
+                        continue;
+                    }
+
+                    break;
+                }
+
+                map.Add(current, Sand);
+                count++;
+            }
+        }
+
+        static Point Parse(string value)
+        {
+            var splitAt = value.IndexOf(',');
+            return new(int.Parse(value[..splitAt]), int.Parse(value.Substring(splitAt + 1)));
+        }
+    }
+
+    public static void Day14B()
+    {
+        const char Rock = '#';
+        const char Sand = 'o';
+
+        var paths = Read.StringBatch().Select(line => line.Split(" -> ").Select(x => Parse(x)).ToArray()).ToArray();
+
+        Dictionary<Point, char> map = new();
+        foreach (var path in paths)
+        {
+            var previous = path.First();
+
+            foreach (var point in path.Skip(1))
+            {
+                if (previous.X == point.X)
+                {
+                    for (int i = Math.Min(previous.Y, point.Y); i <= Math.Max(previous.Y, point.Y); i++)
+                    {
+                        map[new(point.X, i)] = Rock;
+                    }
+                    previous = point;
+                    continue;
+                }
+                if (previous.Y == point.Y)
+                {
+                    for (int i = Math.Min(previous.X, point.X); i <= Math.Max(previous.X, point.X); i++)
+                    {
+                        map[new(i, point.Y)] = Rock;
+                    }
+                    previous = point;
+                    continue;
+                }
+                throw new Exception("not a line");
+            }
+        }
+
+        var bottom = paths.SelectMany(x => x).Max(x => x.Y) + 2;
+        var left = 500 - bottom - 1;
+        var right = 500 + bottom + 1;
+        for (int i = left; i <= right; i++)
+        {
+            map[new(i, bottom)] = Rock;
+        }
+
+        var line = Console.CursorTop;
+
+        var count = Process(bottom, map);
+        Console.WriteLine(count);
+
+        /*
+498,4 -> 498,6 -> 496,6
+503,4 -> 502,4 -> 502,9 -> 494,9
+
+
+        */
+
+        int Process(int bottom, Dictionary<Point, char> map)
+        {
+            Point start = new(500, 0);
+            var count = 0;
+            while (true)
+            {
+                var current = start;
+
+                while (true)
+                {
+                    // down
+                    while (true)
+                    {
+                        Print();
+
+                        var down = current.Move(0, 1);
+                        if (down.Y > bottom)
+                        {
+                            throw new Exception("error");
+                        }
+
+                        if (map.ContainsKey(down))
+                            break;
+
+                        current = down;
+                    }
+
+                    // down left
+                    var left = current.Move(-1, 1);
+                    if (!map.ContainsKey(left))
+                    {
+                        current = left;
+                        continue;
+                    }
+
+                    // down right
+                    var right = current.Move(1, 1);
+                    if (!map.ContainsKey(right))
+                    {
+                        current = right;
+                        continue;
+                    }
+
+                    break;
+                }
+
+                map.Add(current, Sand);
+                count++;
+
+                if (current == start) return count;
+
+                void Print()
+                {
+                    Console.SetCursorPosition(0, line);
+                    for (int i = 0; i <= bottom; i++)
+                    {
+                        Console.WriteLine(new string(Enumerable.Range(left, right - left + 1).Select(x =>
+                            new Point(x, i) == current ? '*' : map.TryGetValue(new(x, i), out var value) ? value : '.').ToArray()));
+                    }
+                    System.Threading.Thread.Sleep(1);
+                }
+            }
+        }
+
+        static Point Parse(string value)
+        {
+            var splitAt = value.IndexOf(',');
+            return new(int.Parse(value[..splitAt]), int.Parse(value.Substring(splitAt + 1)));
+        }
+    }
+
+    public static void Day15A()
+    {
+        var regex = new Regex(@"^Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+)$");
+        var sensors = Read.StringBatch().Select(x =>
+        {
+            var match = regex.Match(x);
+            if (!match.Success) throw new Exception("not a match");
+            return new Sensor15A(new(int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value)), new(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value)));
+        }).ToArray();
+
+        var line = Read.Int();
+
+        HashSet<int> readings = new();
+        HashSet<Point> bs = new();
+        foreach (var s in sensors)
+        {
+            var dist = Math.Abs(s.L.X - s.B.X) + Math.Abs(s.L.Y - s.B.Y);
+
+            var offset = dist - Math.Abs(s.L.Y - line);
+            var start = s.L.X - offset;
+            var end = s.L.X + offset;
+            for (int i = start; i <= end; i++)
+            {
+                readings.Add(i);
+            }
+
+            if (s.B.Y == line) bs.Add(s.B);
+        }
+
+        Console.WriteLine(readings.Count - bs.Count);
+    }
+    public static void Day15BLong()
+    {
+        var regex = new Regex(@"^Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+)$");
+        var sensors = Read.StringBatch().Select(x =>
+        {
+            var match = regex.Match(x);
+            if (!match.Success) throw new Exception("not a match");
+            return new Sensor15A(new(int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value)), new(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value)));
+        }).ToArray();
+
+        var limit = Read.Int() * 2;
+
+        var matches = new List<Point>();
+        for (int line = 0; line < limit; line++)
+        {
+            HashSet<int> readings = new();
+            // HashSet<Point> bs = new();
+            foreach (var s in sensors)
+            {
+                var dist = Math.Abs(s.L.X - s.B.X) + Math.Abs(s.L.Y - s.B.Y);
+
+                var offset = dist - Math.Abs(s.L.Y - line);
+                var start = s.L.X - offset;
+                var end = s.L.X + offset;
+                for (int i = start; i <= end; i++)
+                {
+                    readings.Add(i);
+                }
+
+                // if (s.B.Y == line) bs.Add(s.B);
+            }
+
+            for (var j = 0; j <= limit; j++)
+                if (!readings.Contains(j)) matches.Add(new(j, line));
+        }
+
+        var match = matches.Single();
+        var tune = 4000000;
+
+        Console.WriteLine(match);
+        Console.WriteLine(match.X * tune + match.Y);
+    }
+    private record struct Sensor15A(Point L, Point B);
+
+    public static void Day15B()
+    {
+        var regex = new Regex(@"^Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+)$");
+        var sensors = Read.StringBatch().Select(x =>
+        {
+            var match = regex.Match(x);
+            if (!match.Success) throw new Exception("not a match");
+            return new Sensor15B(new(int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value)), new(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value)));
+        }).ToArray();
+
+        var limit = Read.Int() * 2;
+
+        var matches = new List<Point>();
+        for (int line = 0; line < limit; line++)
+        {
+            List<Range> ranges = new List<Range>();
+            foreach (var s in sensors)
+            {
+                var offset = s.Dist - Math.Abs(s.L.Y - line);
+                if (offset <= 0) continue;
+
+                var start = s.L.X - offset;
+                var end = s.L.X + offset + 1;
+
+                var @new = new Range(start, end);
+
+                List<Range> newRanges = new List<Range>();
+                foreach (var range in ranges)
+                {
+                    if (!range.Intersection(@new, out var merge))
+                    {
+                        newRanges.Add(range);
+                        continue;
+                    }
+
+                    @new = merge;
+                }
+
+                newRanges.Add(@new);
+                ranges = newRanges;
+            }
+
+            switch (ranges.Count)
+            {
+                case 1: if (ranges[0].Start > 0 || ranges[0].EndEx <= limit) throw new Exception("range error"); else continue;
+                case 2: matches.Add(new(ranges[1].EndEx, line)); continue;
+                default: throw new Exception("count is " + ranges.Count);
+            }
+        }
+
+        var match = matches.Single();
+        var tune = 4000000L;
+
+        Console.WriteLine(match);
+        Console.WriteLine(match.X * tune + match.Y);
+    }
+    private struct Sensor15B
+    {
+        public Sensor15B(Point l, Point b)
+        {
+            L = l;
+            B = b;
+            Dist = Math.Abs(L.X - B.X) + Math.Abs(L.Y - B.Y);
+        }
+        public Point L { get; }
+        public Point B { get; }
+        public int Dist { get; }
+    }
+
+    public static void Current() // Day16A()
     {
         var max = 0L;
         while (true)
@@ -1078,10 +1633,15 @@ public static class Y2022
 
             lines.Add(line);
         }
+
+        foreach (var batch in Read.StringBatches())
+        {
+            lines.Add(batch[0]);
+        }
         Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
     }
 
-    public static void CurrentSample() // Day1xA
+    public static void CurrentSample() // Day1xA()
     {
         var max = 0L;
         while (true)
@@ -1110,6 +1670,38 @@ public static class Y2022
 
             lines.Add(line);
         }
+
+        foreach (var batch in Read.StringBatches())
+        {
+            lines.Add(batch[0]);
+        }
         Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
+    }
+
+    private record struct Point(int X, int Y)
+    {
+        public Point Move(int dx, int dy) => new(X + dx, Y + dy);
+    }
+
+    private record struct Range(int Start, int EndEx)
+    {
+        public bool Intersection(Range other, out Range result)
+        {
+            if (
+                (other.Start >= Start && other.Start <= EndEx)
+                ||
+                (other.EndEx >= Start && other.EndEx <= EndEx)
+                ||
+                (Start >= other.Start && Start <= other.EndEx)
+                ||
+                (EndEx >= other.Start && EndEx <= other.EndEx))
+            {
+                result = new(Math.Min(Start, other.Start), Math.Max(EndEx, other.EndEx));
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
     }
 }
