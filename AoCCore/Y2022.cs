@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Windows.Markup;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AoCCore;
 
@@ -976,75 +980,122 @@ public static class Y2022
         }
     }
 
-    public static void Day12A() // ne dela
+    public static void Day12A()
     {
-        var input = Read.StringBatch().ToArray();
-        var parsed = input.Select(x => (H: x, Visited: false)).ToArray();
-        // var lines = new (char H, bool Visited)[input.Length, input[0].Length];
+        const char Right = '>';
+        const char Left = '<';
+        const char Down = 'ˇ';
+        const char Up = '^';
+        const char Star = 'O';
+        var invalid = new[] { Right, Left, Down, Up, Star, }.ToHashSet();
 
-        var S = input.Select((h, y) => new Point(h.IndexOf('S'), y)).First(x => x.X != -1);
-        var E = input.Select((h, y) => new Point(h.IndexOf('E'), y)).First(x => x.X != -1);
+        var original = Read.StringBatch().ToArray();
+        var map = original.ToArray();
 
-        var h = input.Length;
-        var w = input[0].Length;
+        var S = map.Select((h, y) => new Point(h.IndexOf('S'), y)).First(x => x.X != -1);
+        var E = map.Select((h, y) => new Point(h.IndexOf('E'), y)).First(x => x.X != -1);
 
-        var queue = new Queue<Point[]>();
-        queue.Enqueue(new[] { S, });
+        var h = map.Length;
+        var w = map[0].Length;
 
-        var minPathLength = int.MaxValue;
-        Point[] minPath = null;
+        var queues = new Queue<Queue<(Point P, char E)>>();
+        queues.Enqueue(new Queue<(Point P, char E)>(new[] { (S, 'a'), }));
 
-        while (queue.TryDequeue(out var path))
+        while (queues.TryDequeue(out var queue))
         {
-            if (path.Length >= minPathLength) continue;
+            var found = false;
+            var newQueue = new Queue<(Point P, char E)>();
 
-            var map = new bool[w, h];
-            foreach (var part in path)
+            while (queue.TryDequeue(out var current))
             {
-                map[part.X, part.Y] = true;
-            }
+                if (current.P.X > 0) Try(-1, 0, Right);
+                if (current.P.X < w - 1) Try(1, 0, Left);
+                if (current.P.Y > 0) Try(0, -1, Down);
+                if (current.P.Y < h - 1) Try(0, 1, Up);
 
-            var current = path.Last();
-            var e = Elevation(current);
+                if (found) break;
 
-            var candidates = new List<(Point, char)>();
-            if (current.X > 0) Try(-1, 0);
-            if (current.X < w - 1) Try(1, 0);
-            if (current.Y > 0) Try(0, -1);
-            if (current.Y < h - 1) Try(0, 1);
-
-            foreach (var dest in candidates.OrderByDescending(x => x.Item2))
-                queue.Enqueue(path.Append(dest.Item1).ToArray());
-
-            void Try(int dx, int dy)
-            {
-                var dest = current.Move(dx, dy);
-
-                if (!map[dest.X, dest.Y])
+                void Try(int dx, int dy, char dir)
                 {
+                    var dest = current.P.Move(dx, dy);
                     var destE = Elevation(dest);
-                    if (destE <= e + 1)
+
+                    if (invalid.Contains(destE)) return;
+                    if (destE < 'a' || destE > 'z') throw new Exception("invalid elevation");
+
+                    if (destE <= current.E + 1)
                     {
+                        Set(dest, dir);
+
                         if (dest == E)
                         {
-                            if (path.Length < minPathLength)
-                            {
-                                minPathLength = path.Length;
-                                minPath = path;
-                            }
-
-                            return;
+                            found = true;
                         }
-                        candidates.Add((dest, destE));
+                        else
+                        {
+                            newQueue.Enqueue((dest, destE));
+                        }
                     }
                 }
             }
+
+            Print(map, 1);
+
+            if (found) break;
+            if (newQueue.Count > 0) queues.Enqueue(newQueue);
         }
 
-        Console.WriteLine(minPathLength);
-        foreach (var p in minPath) Console.WriteLine($"{p}: {Elevation(p)}");
+        var back = E;
+        var steps = 0;
+        var mapWithTrack = map.ToArray();
+        var originalWithTrack = original.ToArray();
+        while (back != S)
+        {
+            char e = Elevation(back);
+            Set2(mapWithTrack, back, '*');
+            Set2(originalWithTrack, back, '*');
 
-        char Elevation(Point p) => p == S ? 'a' : p == E ? 'z' : input[p.Y][p.X];
+            int dx = 0;
+            int dy = 0;
+            switch (e)
+            {
+                case Right: dx = 1; break;
+                case Left: dx = -1; break;
+                case Down: dy = 1; break;
+                case Up: dy = -1; break;
+                default: throw new Exception("not known");
+            }
+
+            back = back.Move(dx, dy);
+            steps++;
+
+            Print(mapWithTrack, 2);
+        }
+
+        Console.WriteLine();
+        Console.WriteLine();
+        Console.WriteLine("Steps: " + steps);
+
+        while (true)
+        {
+            Print(originalWithTrack, 1000);
+
+            Print(original, 1000);
+
+            // Print(map, 1000);
+            // Print(mapWithTrack, 1000);
+        }
+
+        // char ElevationOld(Point p) => p == S ? 'a' : p == E ? 'z' : input[p.Y][p.X];
+        char Elevation(Point p) => map[p.Y][p.X] switch { 'S' => 'a', 'E' => 'z', var x => x, };
+        void Set(Point p, char c) => Set2(map, p, c);
+        static void Set2(string[] map, Point p, char c) => map[p.Y] = map[p.Y][..p.X] + c + map[p.Y][(p.X + 1)..];
+        static void Print(string[] what, int delay)
+        {
+            Thread.Sleep(delay);
+            Console.SetCursorPosition(0, 0);
+            foreach (var p in what) Console.WriteLine(p);
+        }
     }
 
     public static void Day13A()
@@ -1382,13 +1433,6 @@ public static class Y2022
         var count = Process(bottom, map);
         Console.WriteLine(count);
 
-        /*
-498,4 -> 498,6 -> 496,6
-503,4 -> 502,4 -> 502,9 -> 494,9
-
-
-        */
-
         int Process(int bottom, Dictionary<Point, char> map)
         {
             Point start = new(500, 0);
@@ -1438,7 +1482,7 @@ public static class Y2022
                 map.Add(current, Sand);
                 count++;
 
-                if (current == start) return count;
+                if (current == start) { Print(); return count; }
 
                 void Print()
                 {
@@ -1446,9 +1490,9 @@ public static class Y2022
                     for (int i = 0; i <= bottom; i++)
                     {
                         Console.WriteLine(new string(Enumerable.Range(left, right - left + 1).Select(x =>
-                            new Point(x, i) == current ? '*' : map.TryGetValue(new(x, i), out var value) ? value : '.').ToArray()));
+                            map.TryGetValue(new(x, i), out var value) ? value : new Point(x, i) == current ? '*' : '.').ToArray()));
                     }
-                    System.Threading.Thread.Sleep(1);
+                    Thread.Sleep(1);
                 }
             }
         }
@@ -1604,42 +1648,243 @@ public static class Y2022
         public int Dist { get; }
     }
 
-    public static void Current() // Day16A()
+    public static void XDay16A() // not working
     {
-        var max = 0L;
-        while (true)
-        {
-            var sum = Read.LongBatch().Sum();
-            if (sum == 0) { break; }
+        // Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
+        var regex = new Regex(@"^Valve (\w+) has flow rate=(\d+); tunnel(s)? lead(s)? to valve(s)? (\w+(, \w+)*)$");
+        var valves = Read.StringBatch().Select(Parse).ToDictionary(x => x.Key);
 
-            if (sum > max) { max = sum; }
-        }
+        foreach (var valve in valves) Console.WriteLine(valve);
+
+        var max = 0;
+        Dfs(valves["AA"], 30, 0, string.Empty);
+
         Console.WriteLine(max);
 
-        var all = new List<long>();
-        foreach (var batch in Read.LongBatches())
+        void Dfs(Valve v, int remaining, int total, string path)
         {
-            var sum = batch.Sum();
-            if (sum == 0) { break; }
+            path += " " + v.Key;
 
-            all.Add(sum);
+            // if (!v.ShouldVisit) return;
+            for (int i = path.Length / 3 / 2; i > 0; i--)
+            {
+                if (path.Substring(path.Length - i * 3, i * 3) == path.Substring(path.Length - (i * 2) * 3, i * 3))
+                    return;
+            }
+
+            if (remaining < 3)
+            {
+                if (total > max) max = total;
+                return;
+            }
+
+            //v.ShouldVisit = false;
+
+            foreach (var w in v.GetLinks(valves))
+            {
+                // open
+                if (remaining > 2 && w.Rate > 0 && !path.Contains(w.Key))
+                {
+                    // w.IsOpen = true;
+                    Dfs(w, remaining - 2, total += (remaining - 2) * v.Rate, path);
+                }
+
+                // do not open skip
+                Dfs(w, remaining - 1, total, path);
+            }
+
+            //v.ShouldVisit = true;
+            // v.IsOpen = false;
         }
-        Console.WriteLine(all.OrderDescending().Take(3).Sum());
 
-        var lines = new List<string>();
+        Valve Parse(string input)
+        {
+            var match = regex.Match(input);
+            if (!match.Success) throw new Exception("no match");
+
+            return new Valve(match.Groups[1].Value, int.Parse(match.Groups[2].Value), match.Groups[6].Value.Split(", "));
+        }
+    }
+    private record class Valve(string Key, int Rate, string[] Links)
+    {
+        //public bool ShouldVisit { get; set; } = true;
+        // public bool IsOpen { get; set; }
+
+        public IEnumerable<Valve> GetLinks(Dictionary<string, Valve> valves) => Links.Select(x => valves[x])/*.Where(x => x.ShouldVisit)*/;
+    }
+
+    public static void Current() // XDay17A() // not working
+    {
+        var rocks = new Shape[]
+        {
+            new Shape(new Point[] { new(0, 0), new(1, 0), new(2, 0), new(3, 0),            }, 1, '-'), // --
+            new Shape(new Point[] { new(1, 0), new(0, 1), new(1, 1), new(2, 1), new(1, 2), }, 3, '+'), // +
+            new Shape(new Point[] { new(0, 0), new(1, 0), new(2, 0), new(2, 1), new(2, 2), }, 3, 'L'), // _|
+            new Shape(new Point[] { new(0, 0), new(0, 1), new(0, 2), new(0, 3),            }, 4, '|'), // |
+            new Shape(new Point[] { new(0, 0), new(1, 0), new(0, 1), new(1, 1),            }, 2, 'O'), // [] □
+        };
+
+        var moves = Console.ReadLine();
+        // var chamber = new List<bool[]>();
+        const int drawH = 50;
+        const int width = 7;
+        // var chamber = Enumerable.Repeat(0, drawH).Select(_ => new bool[width]).ToList(); Console.Clear();
+        var chamber = Enumerable.Repeat(0, drawH).Select(_ => new char[width]).ToList(); Console.Clear();
+        var iteration = 0;
+        var maxH = 0;
+
+        const int Steps = 2022;
+        for (int i = 0; i < Steps; i++)
+        {
+            var next = rocks[i % 5];
+            var reqiredHeight = maxH + 3 + next.Height;
+
+            for (int h = chamber.Count; h < reqiredHeight; h++)
+            {
+                chamber.Add(new char[width]);
+            }
+
+            var position = Move(next.Points, 2, maxH + 3);
+            Print();
+
+            while (true)
+            {
+                var direction = moves[iteration++ % moves.Length];
+
+                var newPosition = Move(position, direction == '<' ? -1 : 1, 0);
+
+                if (!WillHit()) position = newPosition;
+                Print();
+
+                newPosition = Move(position, 0, -1);
+
+                if (WillHit()) break;
+                position = newPosition;
+                Print();
+
+                bool WillHit()
+                {
+                    return newPosition.Any(p => p.X < 0 || p.X >= width || p.Y < 0 || chamber[p.Y][p.X] != 0);
+                }
+            }
+
+            // store
+            foreach (var p in position) chamber[p.Y][p.X] = chamber[p.Y][p.X] == 0 ? next.C : throw new Exception("what");
+            position = Array.Empty<Point>(); Print();
+
+            // max rock
+            for (int h = chamber.Count - 1; h >= 0; h--)
+            {
+                if (chamber[h].Any(x => x != 0))
+                {
+                    maxH = h + 1;
+                    break;
+                }
+            }
+
+            void Print()
+            {
+                if (i > 100 && i % 100 != 0 && i < 2010)
+                    return;
+
+                Console.SetCursorPosition(0, 0);
+                for (int i = 0; i < drawH; i++)
+                {
+                    var y = chamber.Count - 1 - i;
+                    Console.WriteLine($"|{new string(chamber[y].Select((b, x) => position.Contains(new Point(x, y)) ? '@' : b != 0 ? b : '.').ToArray())}|");
+                }
+
+                Console.WriteLine("+-------+");
+                Console.WriteLine();
+                Console.WriteLine($"{i + 1}: {maxH}");
+                Thread.Sleep(10);
+            }
+        }
+
+        // 3174 3173 3172 3171  3141 ?? 3109
+        Console.WriteLine($"{Steps}: {maxH}");
+
+        static Point[] Move(Point[] points, int dx, int dy)
+        {
+            return points.Select(p => p.Move(dx, dy)).ToArray();
+        }
+    }
+    private record class Shape(Point[] Points, int Height, char C);
+
+    public static void Day18A()
+    {
+        int totalSurface = 0;
+
+        var dots = new HashSet<Point3>();
         foreach (var line in Read.StringBatch())
         {
-            if (char.IsDigit(line[1])) break;
+            var input = line.Split(',').Select(int.Parse).ToArray();
+            var p = new Point3(input[0], input[1], input[2]);
+            dots.Add(p);
 
-            lines.Add(line);
+            Merge(dx: 1);
+            Merge(dx: -1);
+            Merge(dy: 1);
+            Merge(dy: -1);
+            Merge(dz: 1);
+            Merge(dz: -1);
+
+            void Merge(int dx = 0, int dy = 0, int dz = 0)
+            {
+                totalSurface += dots.Contains(p.Move(dx, dy, dz)) ? -1 : 1;
+            }
         }
 
-        foreach (var batch in Read.StringBatches())
-        {
-            lines.Add(batch[0]);
-        }
-        Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
+        Console.WriteLine(totalSurface);
     }
+    public static void Current18() // Day18A()
+    {
+        int totalSurface = 0;
+
+        var dots = new HashSet<Point3>();
+        var lavas = new Dictionary<Point3, Lava>();
+        foreach (var line in Read.StringBatch())
+        {
+            var input = line.Split(',').Select(int.Parse).ToArray();
+            var p = new Point3(input[0], input[1], input[2]);
+            var lava = new Lava(new() { p, });
+
+            dots.Add(p);
+            lavas.Add(p, lava);
+
+            Merge(dx: 1);
+            Merge(dx: -1);
+            Merge(dy: 1);
+            Merge(dy: -1);
+            Merge(dz: 1);
+            Merge(dz: -1);
+
+            void Merge(int dx = 0, int dy = 0, int dz = 0)
+            {
+                totalSurface += dots.Contains(p.Move(dx, dy, dz)) ? -1 : 1;
+
+                if (lavas.TryGetValue(p.Move(dx, dy, dz), out var neighbour))
+                {
+                    neighbour.Dots.AddRange(lava.Dots);
+                    lava = neighbour;
+
+                    foreach (var nDots in lava.Dots) lavas[nDots] = lava;
+                }
+            }
+        }
+
+        var distincs = lavas.Values.Distinct().ToArray();
+
+
+
+        foreach (var dist in distincs)
+        {
+
+        }
+
+        Console.WriteLine(totalSurface);
+    }
+    private record class Lava(List<Point3> Dots);
 
     public static void CurrentSample() // Day1xA()
     {
@@ -1681,6 +1926,11 @@ public static class Y2022
     private record struct Point(int X, int Y)
     {
         public Point Move(int dx, int dy) => new(X + dx, Y + dy);
+    }
+
+    private record struct Point3(int X, int Y, int Z)
+    {
+        public Point3 Move(int dx, int dy, int dz) => new(X + dx, Y + dy, Z + dz);
     }
 
     private record struct Range(int Start, int EndEx)
