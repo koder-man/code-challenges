@@ -8,7 +8,7 @@ namespace AoCCore
         {
             while (true)
             {
-                Y2022.Current();
+                Y2023.Current();
 
                 Console.WriteLine();
                 Console.WriteLine("Paste data again..");

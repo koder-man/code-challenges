@@ -47,15 +47,27 @@ internal static class Read
 
     public static bool TryInt(out int value) => Try(out value);
 
+    /// <summary>
+    /// 1000 /n 2000 /n 3000 /n /n
+    /// </summary>
     public static IEnumerable<int> IntBatch() => Batch<int>();
 
+    /// <summary>
+    /// 1000 /n 2000 /n 3000 /n /n 7000 /n 8000 /n /n /n
+    /// </summary>
     public static IEnumerable<int[]> IntBatches() => Batches<int>();
 
     public static long Long() => Value<long>();
 
     public static bool TryLong(out long value) => Try(out value);
 
+    /// <summary>
+    /// 1000 /n 2000 /n 3000 /n /n
+    /// </summary>
     public static IEnumerable<long> LongBatch() => Batch<long>();
 
+    /// <summary>
+    /// 1000 /n 2000 /n 3000 /n /n 7000 /n 8000 /n /n /n
+    /// </summary>
     public static IEnumerable<long[]> LongBatches() => Batches<long>();
 }
