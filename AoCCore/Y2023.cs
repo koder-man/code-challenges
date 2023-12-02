@@ -1,20 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Windows.Markup;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace AoCCore;
+﻿namespace AoCCore;
 
 public static class Y2023
 {
-    private static List<string> valid = new List<string>() { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", };
-
     public static void Day01A()
     {
         var total = 0L;
@@ -22,16 +9,16 @@ public static class Y2023
         foreach (var line in Read.StringBatch())
         {
             var all = line.Where(char.IsDigit).ToArray();
-            var value = int.Parse(new string(new[] { all[0], all[all.Length - 1], }));
+            var value = int.Parse(new string(new[] { all[0], all[^1], }));
             total += value;
         }
 
         Console.WriteLine(total);
     }
 
+    private static readonly List<string> Day01BValid = new() { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", };
     public static void Day01B()
     {
-
         var total = 0L;
 
         foreach (var line in Read.StringBatch())
@@ -39,14 +26,14 @@ public static class Y2023
             int first = -1;
             for (var i = 0; i < line.Length; i++)
             {
-                if (TryParse(line[i], line.Substring(i), (a, b) => a.StartsWith(b), out first))
+                if (TryParse(line[i], line[i..], (a, b) => a.StartsWith(b), out first))
                     break;
             }
 
             int last = default;
             for (var i = line.Length - 1; i >= 0; i--)
             {
-                if (TryParse(line[i], line.Substring(0, i + 1), (a, b) => a.EndsWith(b), out last))
+                if (TryParse(line[i], line[..(i + 1)], (a, b) => a.EndsWith(b), out last))
                     break;
             }
 
@@ -64,11 +51,11 @@ public static class Y2023
                 return true;
             }
 
-            foreach (var number in valid)
+            foreach (var number in Day01BValid)
             {
                 if (comparer(sub, number))
                 {
-                    result = valid.IndexOf(number) + 1;
+                    result = Day01BValid.IndexOf(number) + 1;
                     return true;
                 }
             }
@@ -97,7 +84,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
         foreach (var line in Read.StringBatch())
         {
             var parts = line.Split(':');
-            int index = int.Parse(parts[0].Substring(5));
+            int index = int.Parse(parts[0][5..]);
 
             if (!IsOver(parts[1]))
             {
@@ -115,8 +102,8 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
                 var groups = subset.Split(',');
                 foreach (var group in groups)
                 {
-                    var parse = Parse(group);
-                    if (parse.Count > limits[parse.Color])
+                    var (count, color) = Parse(group);
+                    if (count > limits[color])
                     {
                         return true;
                     }
@@ -145,14 +132,14 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
         foreach (var line in Read.StringBatch())
         {
             var parts = line.Split(':');
-            int index = int.Parse(parts[0].Substring(5));
+            int index = int.Parse(parts[0][5..]);
 
             total += ProductOfMins(parts[1]);
         }
 
         Console.WriteLine(total);
 
-        int ProductOfMins(string sets)
+        static int ProductOfMins(string sets)
         {
             var maxes = new Dictionary<Day02Color, int>()
             {
@@ -167,10 +154,10 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
                 var groups = subset.Split(',');
                 foreach (var group in groups)
                 {
-                    var parse = Parse(group);
-                    if (parse.Count > maxes[parse.Color])
+                    var (count, color) = Parse(group);
+                    if (count > maxes[color])
                     {
-                        maxes[parse.Color] = parse.Count;
+                        maxes[color] = count;
                     }
                 }
 
@@ -188,7 +175,8 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
 
     public static void Current() // Day03A()
     {
-        var max = 0L;
+        var sum1 = Read.LongBatch().Sum();
+        Console.WriteLine(sum1);
 
         var all = new List<long>();
         foreach (var batch in Read.LongBatches())

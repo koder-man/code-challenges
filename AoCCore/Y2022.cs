@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Windows.Markup;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace AoCCore;
+﻿namespace AoCCore;
 
 public static class Y2022
 {
@@ -792,7 +781,7 @@ public static class Y2022
             foreach (var monkey in monkeys)
             {
                 while (monkey.CanProcess())
-                    monkeys[monkey.Test(out var newLevel)].Enqueeu(newLevel);
+                    monkeys[monkey.Test(out var newLevel)].Enqueue(newLevel);
             }
         }
 
@@ -832,7 +821,7 @@ public static class Y2022
             return newLevel % divisibleBy == 0 ? toIfTrue : toIfFalse;
         }
 
-        public void Enqueeu(int level) => items.Enqueue(level);
+        public void Enqueue(int level) => items.Enqueue(level);
 
         public override string ToString()
         {
@@ -842,7 +831,7 @@ public static class Y2022
 
     public static void Day11B()
     {
-        var input = new List<(IEnumerable<int> Items, bool IsMult, int? ByVal, int DivisableBy, int IfTrue, int IfFalse)>();
+        var input = new List<(IEnumerable<int> Items, bool IsMultiplication, int? ByVal, int DivisableBy, int IfTrue, int IfFalse)>();
         foreach (var def in Read.StringBatches())
         {
             var items = def[1][18..].Split(", ").Select(int.Parse);
@@ -852,7 +841,7 @@ public static class Y2022
         }
 
         var divisors = input.Select(x => x.DivisableBy).ToArray();
-        var monkeys = input.Select(x => new Monkey11B(divisors, x.Items, x.IsMult, x.ByVal, x.DivisableBy, x.IfTrue, x.IfFalse)).ToArray();
+        var monkeys = input.Select(x => new Monkey11B(divisors, x.Items, x.IsMultiplication, x.ByVal, x.DivisableBy, x.IfTrue, x.IfFalse)).ToArray();
 
         for (int i = 0; i < 10000; i++)
         {
@@ -866,7 +855,7 @@ public static class Y2022
             foreach (var monkey in monkeys)
             {
                 while (monkey.CanProcess())
-                    monkeys[monkey.Test(out var newLevel)].Enqueeu(newLevel);
+                    monkeys[monkey.Test(out var newLevel)].Enqueue(newLevel);
             }
         }
 
@@ -878,17 +867,17 @@ public static class Y2022
 
     private class Monkey11B
     {
-        private readonly Queue<Level> items = new Queue<Level>();
-        private readonly bool isMult;
+        private readonly Queue<Level> items = new();
+        private readonly bool isMultiplication;
         private readonly int? byValue;
         private readonly int divisibleBy;
         private readonly int toIfTrue;
         private readonly int toIfFalse;
 
-        public Monkey11B(IEnumerable<int> divisors, IEnumerable<int> items, bool isMult, int? byValue, int divisibleBy, int toIfTrue, int toIfFalse)
+        public Monkey11B(IEnumerable<int> divisors, IEnumerable<int> items, bool isMultiplication, int? byValue, int divisibleBy, int toIfTrue, int toIfFalse)
         {
             this.items = new Queue<Level>(items.Select(x => new Level(divisors, x)));
-            this.isMult = isMult;
+            this.isMultiplication = isMultiplication;
             this.byValue = byValue;
             this.divisibleBy = divisibleBy;
             this.toIfTrue = toIfTrue;
@@ -903,12 +892,12 @@ public static class Y2022
         {
             Inspections++;
             newLevel = items.Dequeue();
-            if (isMult)
+            if (isMultiplication)
             {
                 if (byValue.HasValue)
-                    newLevel.Mult(byValue.Value);
+                    newLevel.Multiply(byValue.Value);
                 else
-                    newLevel.MultBySelf();
+                    newLevel.MultiplyBySelf();
             }
             else
             {
@@ -918,10 +907,10 @@ public static class Y2022
                     newLevel.AddSelf();
             }
 
-            return newLevel.IsDevisibleBy(divisibleBy) ? toIfTrue : toIfFalse;
+            return newLevel.IsDivisibleBy(divisibleBy) ? toIfTrue : toIfFalse;
         }
 
-        public void Enqueeu(Level level) => items.Enqueue(level);
+        public void Enqueue(Level level) => items.Enqueue(level);
 
         public override string ToString()
         {
@@ -940,7 +929,7 @@ public static class Y2022
                 }
             }
 
-            public void Mult(int value)
+            public void Multiply(int value)
             {
                 foreach (var item in Reminders)
                 {
@@ -948,7 +937,7 @@ public static class Y2022
                 }
             }
 
-            public void MultBySelf()
+            public void MultiplyBySelf()
             {
                 foreach (var item in Reminders)
                 {
@@ -966,10 +955,10 @@ public static class Y2022
 
             public void AddSelf()
             {
-                Mult(2);
+                Multiply(2);
             }
 
-            public bool IsDevisibleBy(int value) => Reminders[value] == 0;
+            public bool IsDivisibleBy(int value) => Reminders[value] == 0;
 
             private void Set(int divisor, int value) => Reminders[divisor] = value % divisor;
 
