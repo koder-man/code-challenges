@@ -173,7 +173,154 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
         }
     }
 
-    public static void Current() // Day03A()
+    /*
+0123456789
+
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+
+     */
+    public static void Day03A()
+    {
+        var r = new Regex("^(\\d+)");
+        var lines = Read.StringBatch().ToArray();
+        var maxH = lines.Length;
+        var maxV = lines[0].Length;
+
+        int total = 0;
+
+        for (int i = 0; i < maxH; i++)
+        {
+            for (int j = 0; j < maxV; j++)
+            {
+                var line = lines[i].Substring(j);
+                var match = r.Match(line);
+                if (match.Success)
+                {
+                    var str = match.Groups[1].Value;
+                    if (NearSymbol(i, j, str.Length))
+                    {
+                        var number = int.Parse(str);
+                        total += number;
+                    }
+                    j += str.Length;
+                }
+            }
+        }
+        Console.WriteLine(total);
+
+        bool NearSymbol(int i, int j, int len)
+        {
+            var startI = Math.Max(0, j - 1);
+            var endI = Math.Min(maxV, j + len + 1);
+            var endLen = endI - startI;
+            if (i > 0)
+            {
+                if (ContainsSymbol(lines[i - 1].Substring(startI, endLen)))
+                    return true;
+            }
+            if (i < maxH - 1)
+            {
+                if (ContainsSymbol(lines[i + 1].Substring(startI, endLen)))
+                    return true;
+            }
+            if (j > 0)
+            {
+                if (IsSymbol(lines[i][j - 1]))
+                    return true;
+            }
+            if (j + len < maxV - 1)
+            {
+                if (IsSymbol(lines[i][j + len]))
+                    return true;
+            }
+            return false;
+
+            static bool ContainsSymbol(string text) => text.Any(IsSymbol);
+            static bool IsSymbol(char c) => !char.IsDigit(c) && c != '.';
+        }
+    }
+    public static void Day03B()
+    {
+        var r = new Regex("^(\\d+)");
+        var lines = Read.StringBatch().ToArray();
+        var maxH = lines.Length;
+        var maxV = lines[0].Length;
+
+        var gears = new Dictionary<Day03Point, List<int>>();
+
+        for (int i = 0; i < maxH; i++)
+        {
+            for (int j = 0; j < maxV; j++)
+            {
+                var line = lines[i].Substring(j);
+                var match = r.Match(line);
+                if (match.Success)
+                {
+                    var str = match.Groups[1].Value;
+                    var point = NearGear(i, j, str.Length);
+                    if (point != default)
+                    {
+                        var number = int.Parse(str);
+                        if (gears.TryGetValue(point, out var nears))
+                        {
+                            nears.Add(number);
+                        }
+                        else
+                        {
+                            gears.Add(point, new List<int>() { number, });
+                        }
+                    }
+                    j += str.Length;
+                }
+            }
+        }
+        var total = gears.Values.Where(x => x.Count > 1).Select(x => x[0] * x[1]).Sum();
+        Console.WriteLine(total);
+
+        Day03Point NearGear(int i, int j, int len)
+        {
+            var startJ = Math.Max(0, j - 1);
+            var endJ = Math.Min(maxV, j + len + 1);
+            var endLen = endJ - startJ;
+            if (i > 0)
+            {
+                var index = lines[i - 1].Substring(startJ, endLen).IndexOf('*');
+                if (index >= 0)
+                    return new Day03Point(i - 1, startJ + index);
+            }
+            if (i < maxH - 1)
+            {
+                var index = lines[i + 1].Substring(startJ, endLen).IndexOf('*');
+                if (index >= 0)
+                    return new Day03Point(i + 1, startJ + index);
+            }
+            if (j > 0)
+            {
+                if (IsGear(lines[i][j - 1]))
+                    return new(i, j - 1);
+            }
+            if (j + len < maxV - 1)
+            {
+                if (IsGear(lines[i][j + len]))
+                    return new(i, j + len);
+            }
+            return default;
+
+            static bool IsGear(char c) => c == '*';
+        }
+    }
+    private record struct Day03Point(int X, int Y);
+
+    public static void Current() // Day04A()
     {
         var sum1 = Read.LongBatch().Sum();
         Console.WriteLine(sum1);
@@ -202,7 +349,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
         Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
     }
 
-    public static void CurrentSample() // Day04A()
+    public static void CurrentSample() // Day05A()
     {
         var sum1 = Read.LongBatch().Sum();
         Console.WriteLine(sum1);
