@@ -4,6 +4,13 @@ public static class Y2023
 {
     public static void Day01A()
     {
+        /*
+1abc2
+pqr3stu8vwx
+a1b2c3d4e5f
+treb7uchet
+
+         */
         var total = 0L;
 
         foreach (var line in Read.StringBatch())
@@ -19,6 +26,16 @@ public static class Y2023
     private static readonly List<string> Day01BValid = new() { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", };
     public static void Day01B()
     {
+        /*
+two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen
+
+         */
         var total = 0L;
 
         foreach (var line in Read.StringBatch())
@@ -65,6 +82,14 @@ public static class Y2023
         }
     }
 
+    /*
+Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+
+     */
     enum Day02Color { blue, red, green }
     public static void Day02A()
     {
@@ -76,11 +101,6 @@ public static class Y2023
             { Day02Color.green, 13 },
         };
         int total = 0;
-        /*Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
-Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
-Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
-Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
-Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
         foreach (var line in Read.StringBatch())
         {
             var parts = line.Split(':');
@@ -124,11 +144,6 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
     public static void Day02B()
     {
         int total = 0;
-        /*Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
-Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
-Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
-Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
-Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
         foreach (var line in Read.StringBatch())
         {
             var parts = line.Split(':');
@@ -320,7 +335,70 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
     }
     private record struct Day03Point(int X, int Y);
 
-    public static void Current() // Day04A()
+    /*
+Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
+Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
+Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
+Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
+Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
+Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
+
+     */
+    public static void Day04A()
+    {
+        double total = 0;
+        foreach (var line in Read.StringBatch().SelectIndex())
+        {
+            var parts = line.Value.Split(':')[1].Split('|');
+
+            var winning = parts[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToHashSet();
+            var mine = parts[1].Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToHashSet()
+                .Where(winning.Contains)
+                .Count();
+
+            if (mine > 0)
+            {
+                total += Math.Pow(2, mine - 1);
+            }
+        }
+
+        Console.WriteLine(total);
+    }
+
+    public static void Day04B()
+    {
+        var cards = Read.StringBatch().ToArray();
+        var copies = Enumerable.Repeat(1, cards.Length).ToArray();
+
+        for (int i = 0; i < cards.Length; i++)
+        {
+            var parts = cards[i].Split(':')[1].Split('|');
+
+            var winning = parts[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToHashSet();
+            var mine = parts[1].Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToHashSet()
+                .Where(winning.Contains)
+                .Count();
+
+            for (int j = 1; j <= mine; j++)
+            {
+                if (j + i == cards.Length) break;
+
+                copies[j + i] += copies[i];
+            }
+        }
+
+        Console.WriteLine(copies.Sum());
+    }
+
+    public static void Current() // Day05A()
     {
         var sum1 = Read.LongBatch().Sum();
         Console.WriteLine(sum1);
@@ -349,7 +427,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green*/
         Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
     }
 
-    public static void CurrentSample() // Day05A()
+    public static void CurrentSample() // Day06A()
     {
         var sum1 = Read.LongBatch().Sum();
         Console.WriteLine(sum1);
