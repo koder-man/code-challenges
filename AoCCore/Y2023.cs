@@ -398,7 +398,201 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
         Console.WriteLine(copies.Sum());
     }
 
-    public static void Current() // Day05A()
+    /*
+seeds: 79 14 55 13
+
+seed-to-soil map:
+50 98 2
+52 50 48
+
+soil-to-fertilizer map:
+0 15 37
+37 52 2
+39 0 15
+
+fertilizer-to-water map:
+49 53 8
+0 11 42
+42 0 7
+57 7 4
+
+water-to-light map:
+88 18 7
+18 25 70
+
+light-to-temperature map:
+45 77 23
+81 45 19
+68 64 13
+
+temperature-to-humidity map:
+0 69 1
+1 0 69
+
+humidity-to-location map:
+60 56 37
+56 93 4
+
+     */
+    public static void Day05A()
+    {
+        var input = Read.StringBatches().ToArray();
+
+        var seeds = input[0][0].Substring("seeds: ".Length).Split(' ').Select(long.Parse).ToArray();
+
+        var maps = input.Skip(1).Select(paragraph => new Day05AMap(paragraph.Skip(1).Select(row => Parse(row.Split(' ').Select(long.Parse).ToArray())).ToArray())).ToArray();
+
+        var locations = seeds.Select(seed => maps.Aggregate(seed, (input, map) => map.Transform(input))).ToArray();
+
+        Console.WriteLine(locations.Min());
+
+        static Day05AMapping Parse(long[] row) => new Day05AMapping(row[1], row[0], row[2]);
+    }
+
+    private record class Day05AMap(IReadOnlyCollection<Day05AMapping> Mappings)
+    {
+        public long Transform(long input)
+        {
+            foreach (var mapping in Mappings)
+            {
+                if (mapping.TryTransform(ref input))
+                    break;
+            }
+
+            return input;
+        }
+    }
+
+    private record class Day05AMapping(long FromStart, long ToStart, long Range)
+    {
+        public bool TryTransform(ref long input)
+        {
+            if (FromStart <= input && FromStart + Range > input)
+            {
+                input = ToStart + input - FromStart;
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    public static void Day05B()
+    {
+        var input = Read.StringBatches().ToArray();
+
+        var seedRanges = input[0][0].Substring("seeds: ".Length).Split(' ').Select(long.Parse).Chunk(2)
+            .Select(seed => new Day05BRange(seed[0], seed[0] + seed[1]))
+            .ToArray();
+
+        var maps = input.Skip(1).Select(paragraph => new Day05BMap(paragraph[0], paragraph.Skip(1).Select((row, i) => Parse(i, row.Split(' ').Select(long.Parse).ToArray())).ToArray())).ToArray();
+
+        var seedEndRanges = seedRanges
+            .Select(
+                seedRange => maps.Aggregate(
+                    new[] { seedRange, }, (ranges, map) => map.Transform(ranges)))
+            .ToArray();
+
+        var locations = seedEndRanges.Select(ranges => ranges.Min(r => r.Start)).ToArray();
+
+        Console.WriteLine(locations.Min());
+
+        static Day05BMapping Parse(int Index, long[] row) => new Day05BMapping(Index, row[1], row[0] - row[1], row[2]);
+    }
+
+    private record class Day05BMap(string Mapping, IReadOnlyCollection<Day05BMapping> Mappings)
+    {
+        public Day05BRange[] Transform(IEnumerable<Day05BRange> input)
+        {
+            return input.SelectMany(Transform).ToArray();
+        }
+
+        public Day05BRange[] Transform(Day05BRange input)
+        {
+            var transformed = new List<Day05BRange>();
+
+            var toDo = new List<Day05BRange>() { input, };
+
+            foreach (var map in Mappings)
+            {
+                var nextTodo = new List<Day05BRange>();
+                foreach (var range in toDo)
+                {
+                    map.Transform(range, ref nextTodo, ref transformed);
+                }
+
+                toDo = nextTodo;
+            }
+
+            return toDo.Union(transformed).ToArray();
+        }
+    }
+
+    private record class Day05BMapping(int Index, long FromStart, long Offset, long Range) // 2 0 1
+    {
+        public long FromEnd => FromStart + Range; // 3
+
+        public void Transform(Day05BRange input, ref List<Day05BRange> toDo, ref List<Day05BRange> transformed) // 1 4
+        {
+            if (input.Start < FromStart)
+            {
+                var preEnd = Math.Min(input.End, FromStart); // 2 = 4 2
+
+                toDo.Add(new Day05BRange(input.Start, preEnd));
+            }
+
+            var transformStart = Math.Max(input.Start, FromStart); // 2 = 1 2
+            var transformEnd = Math.Min(input.End, FromEnd); // 3 = 4 3
+
+            if (transformStart < transformEnd)
+                transformed.Add(new Day05BRange(transformStart + Offset, transformEnd + Offset));
+
+            if (input.End > FromEnd)
+            {
+                var rightStart = Math.Max(input.Start, FromEnd); // 3 = 1 3
+
+                toDo.Add(new Day05BRange(rightStart, input.End));
+            }
+        }
+    }
+
+    private record struct Day05BRange(long Start, long End);
+
+    public static void Day06A()
+    {
+        var times = Console.ReadLine().Substring("Time:    ".Length).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
+        var distances = Console.ReadLine().Substring("Time:    ".Length).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
+
+        var ways = 1L;
+
+        for (int i = 0; i < times.Length; i++)
+        {
+            var time = times[i];
+            var discriminant = Math.Sqrt(time * time - 4 * distances[i]);
+
+            var minimum = (int)((double)time / 2 - discriminant / 2) + 1;
+
+            ways *= time - 2 * minimum + 1;
+        }
+
+        Console.WriteLine(ways);
+    }
+
+    public static void Day06B()
+    {
+        var time = long.Parse(Console.ReadLine().Substring("Time:    ".Length).Replace(" ", string.Empty));
+        var distance = long.Parse(Console.ReadLine().Substring("Time:    ".Length).Replace(" ", string.Empty));
+
+        var discriminant = Math.Sqrt(time * time - 4 * distance);
+
+        var minimum = (long)((double)time / 2 - discriminant / 2) + 1;
+
+        var ways = time - 2 * minimum + 1;
+
+        Console.WriteLine(ways);
+    }
+
+    public static void Current() // Day07()
     {
         var sum1 = Read.LongBatch().Sum();
         Console.WriteLine(sum1);
@@ -427,7 +621,7 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
         Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
     }
 
-    public static void CurrentSample() // Day06A()
+    public static void CurrentSample() // Day08()
     {
         var sum1 = Read.LongBatch().Sum();
         Console.WriteLine(sum1);
