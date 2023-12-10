@@ -39,6 +39,9 @@ internal static class Read
         }
     }
 
+    public static IEnumerable<T> HBatch<T>() where T : IParsable<T> => Console.ReadLine().Split(' ').Select(x => T.Parse(x, null));
+    public static IEnumerable<T[]> HBatches<T>() where T : IParsable<T> => StringBatch().Select(row => row.Split(' ').Select(x => T.Parse(x, null)).ToArray());
+
     public static IEnumerable<T> Batch<T>() where T : IParsable<T> => StringBatch().Select(x => T.Parse(x, null));
 
     public static IEnumerable<T[]> Batches<T>() where T : IParsable<T> => StringBatches().Select(x => x.Select(v => T.Parse(v, null)).ToArray());

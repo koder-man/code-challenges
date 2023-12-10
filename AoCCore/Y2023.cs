@@ -592,8 +592,570 @@ humidity-to-location map:
         Console.WriteLine(ways);
     }
 
-    public static void Current() // Day07()
+    /*
+32T3K 765
+T55J5 684
+KK677 28
+KTJJT 220
+QQQJA 483
+
+     */
+    private enum Day07Type
     {
+        FiveOfAKind,
+        FourOfAKind,
+        FullHouse,
+        ThreeOfAKind,
+        TwoPairs,
+        OnePair,
+        Nothing,
+    }
+
+    public static void Day07A()
+    {
+        var hands = Read.StringBatch().Select(x => x.Split(' ')).Select(x => new Day07AHand(x[0], int.Parse(x[1]))).ToArray();
+
+        var ordered = hands.OrderDescending(new Day07AHand.HandComparer()).ToArray();
+
+        foreach (var hand in ordered)
+            Console.WriteLine(hand);
+
+        var result = ordered.Select((x, i) => (long)x.Bid * (i + 1)).ToArray();
+
+        Console.WriteLine(result.Sum());
+    }
+
+    private struct Day07AHand
+    {
+        private static readonly (Day07Type Type, Regex Regex)[] Matching = new (Day07Type Type, Regex Regex)[]
+        {
+            (Day07Type.FiveOfAKind, new ("(?<C1>.)\\1{4,}")),
+            (Day07Type.FourOfAKind,  new ("(?<C1>.)\\1{3,}")),
+            (Day07Type.FullHouse,  new ("(?<C2>.)\\1{1,}(?<C1>.)\\2{2,}")),
+            (Day07Type.FullHouse,  new ("(?<C1>.)\\1{2,}(?<C2>.)\\2{1,}")),
+            (Day07Type.ThreeOfAKind,  new ("(?<C1>.)\\1{2,}")),
+            (Day07Type.TwoPairs,  new ("(?<C1>.)\\1{1,}.?(?<C2>.)\\2{1,}")),
+            (Day07Type.OnePair,  new ("(?<C1>.)\\1{1,}")),
+            (Day07Type.Nothing,  new (".")),
+        };
+
+        public static Dictionary<char, int> Sorting = "A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2".Split(", ").Select((x, i) => (Char: x[0], i)).ToDictionary(x => x.Char, x => x.i);
+
+        public Day07AHand(string cards, int bid)
+        {
+            var sorted = new string(cards.Order().ToArray());
+
+            var match = Matching.Select(r => (r.Type, Match: r.Regex.Match(sorted))).First(m => m.Match.Success);
+
+            Letters = cards;
+            Bid = bid;
+            Type = match.Type;
+        }
+
+        public static int GetSorting(char x) => Sorting[x];
+
+        public string Letters { get; }
+
+        public int Bid { get; }
+
+        public Day07Type Type { get; }
+
+        public override string ToString() => $"{Letters} {Bid} {Type}";
+
+        public class HandComparer : IComparer<Day07AHand>
+        {
+            int IComparer<Day07AHand>.Compare(Day07AHand x, Day07AHand y)
+            {
+                var compare = x.Type.CompareTo(y.Type);
+                if (compare != 0) return compare;
+
+                var x1 = x.Letters.Select(GetSorting).ToArray();
+                var y1 = y.Letters.Select(GetSorting).ToArray();
+
+                compare = x.Letters.Select(GetSorting).Zip(y.Letters.Select(GetSorting)).Select(x => x.First.CompareTo(x.Second)).FirstOrDefault(x => x != 0);
+                return compare;
+            }
+        }
+    }
+
+    public static void Day07B()
+    {
+        var hands = Read.StringBatch().Select(x => x.Split(' ')).Select(x => new Day07BHand(x[0], int.Parse(x[1]))).ToArray();
+
+        var ordered = hands.OrderDescending(new Day07BHand.HandComparer()).ToArray();
+
+        foreach (var hand in ordered)
+            Console.WriteLine(hand);
+
+        var result = ordered.Select((x, i) => (long)x.Bid * (i + 1)).ToArray();
+
+        Console.WriteLine(result.Sum());
+    }
+
+    private struct Day07BHand
+    {
+        private static readonly (Day07Type Type, Regex Regex)[] Matching = new (Day07Type Type, Regex Regex)[]
+        {
+            (Day07Type.FiveOfAKind, new ("(?<C1>.)\\1{4,}")),
+            (Day07Type.FourOfAKind,  new ("(?<C1>.)\\1{3,}")),
+            (Day07Type.FullHouse,  new ("(?<C2>.)\\1{1,}(?<C1>.)\\2{2,}")),
+            (Day07Type.FullHouse,  new ("(?<C1>.)\\1{2,}(?<C2>.)\\2{1,}")),
+            (Day07Type.ThreeOfAKind,  new ("(?<C1>.)\\1{2,}")),
+            (Day07Type.TwoPairs,  new ("(?<C1>.)\\1{1,}.?(?<C2>.)\\2{1,}")),
+            (Day07Type.OnePair,  new ("(?<C1>.)\\1{1,}")),
+            (Day07Type.Nothing,  new (".")),
+        };
+
+        public static Dictionary<char, int> Sorting = "A, K, Q, T, 9, 8, 7, 6, 5, 4, 3, 2, J, X".Split(", ").Select((x, i) => (Char: x[0], i)).ToDictionary(x => x.Char, x => x.i);
+
+        public Day07BHand(string cards, int bid)
+        {
+            var sorted = new string(cards.Order().ToArray());
+
+            var match = Matching.Select(r => (r.Type, Match: r.Regex.Match(sorted))).First(m => m.Match.Success);
+            var type = match.Type;
+
+            var cnt = cards.Count(x => x == 'J');
+            switch (cnt)
+            {
+                case 0: break;
+                case 1:
+                    type = type switch
+                    {
+                        // Day07Type.FiveOfAKind => type,
+                        Day07Type.FourOfAKind => Day07Type.FiveOfAKind,
+                        // Day07Type.FullHouse => type,
+                        Day07Type.ThreeOfAKind => Day07Type.FourOfAKind,
+                        Day07Type.TwoPairs => Day07Type.FullHouse,
+                        Day07Type.OnePair => Day07Type.ThreeOfAKind,
+                        _ => Day07Type.OnePair,
+                    };
+                    break;
+                case 2:
+                    type = type switch
+                    {
+                        // Day07Type.FiveOfAKind => type,
+                        // Day07Type.FourOfAKind => Day07Type.FiveOfAKind,
+                        Day07Type.FullHouse => Day07Type.FiveOfAKind,
+                        Day07Type.ThreeOfAKind => Day07Type.FiveOfAKind,
+                        Day07Type.TwoPairs => Day07Type.FourOfAKind,
+                        Day07Type.OnePair => Day07Type.ThreeOfAKind,
+                        _ => throw new NotSupportedException(),
+                    };
+                    break;
+                case 3:
+                    type = type switch
+                    {
+                        // Day07Type.FiveOfAKind => type,
+                        // Day07Type.FourOfAKind => Day07Type.FiveOfAKind,
+                        Day07Type.FullHouse => Day07Type.FiveOfAKind,
+                        Day07Type.ThreeOfAKind => Day07Type.FourOfAKind,
+                        // Day07Type.TwoPairs => Day07Type.FourOfAKind,
+                        // Day07Type.OnePair => Day07Type.FourOfAKind,
+                        _ => throw new NotSupportedException(),
+                    };
+                    break;
+                case 4:
+                    type = type switch
+                    {
+                        // Day07Type.FiveOfAKind => type,
+                        Day07Type.FourOfAKind => Day07Type.FiveOfAKind,
+                        // Day07Type.FullHouse => Day07Type.FiveOfAKind,
+                        // Day07Type.ThreeOfAKind => Day07Type.FourOfAKind,
+                        // Day07Type.TwoPairs => Day07Type.FourOfAKind,
+                        // Day07Type.OnePair => Day07Type.FourOfAKind,
+                        _ => throw new NotSupportedException(),
+                    };
+                    break;
+                case 5:
+                    type = type switch
+                    {
+                        Day07Type.FiveOfAKind => type,
+                        // Day07Type.FourOfAKind => Day07Type.FiveOfAKind,
+                        // Day07Type.FullHouse => Day07Type.FiveOfAKind,
+                        // Day07Type.ThreeOfAKind => Day07Type.FourOfAKind,
+                        // Day07Type.TwoPairs => Day07Type.FourOfAKind,
+                        // Day07Type.OnePair => Day07Type.FourOfAKind,
+                        _ => throw new NotSupportedException(),
+                    };
+                    break;
+            }
+
+            Letters = cards;
+            Bid = bid;
+            Type = type;
+        }
+
+        public static int GetSorting(char x) => Sorting[x];
+
+        public string Letters { get; }
+
+        public int Bid { get; }
+
+        public Day07Type Type { get; }
+
+        public override string ToString() => $"{Letters} {Bid} {Type}";
+
+        public class HandComparer : IComparer<Day07BHand>
+        {
+            int IComparer<Day07BHand>.Compare(Day07BHand x, Day07BHand y)
+            {
+                var compare = x.Type.CompareTo(y.Type);
+                if (compare != 0) return compare;
+
+                var x1 = x.Letters.Select(GetSorting).ToArray();
+                var y1 = y.Letters.Select(GetSorting).ToArray();
+
+                compare = x.Letters.Select(GetSorting).Zip(y.Letters.Select(GetSorting)).Select(x => x.First.CompareTo(x.Second)).FirstOrDefault(x => x != 0);
+                return compare;
+            }
+        }
+    }
+
+    public static void Day08A()
+    {
+        var instructions = Console.ReadLine();
+        Console.ReadLine();
+
+        var lines = Read.StringBatch()
+            .Select(x => (x.Substring(0, 3), Left: x.Substring(7, 3), Right: x.Substring(12, 3)))
+            .ToDictionary(x => x.Item1, x => (x.Left, x.Right));
+
+        var current = "AAA";
+        var steps = 0;
+        while (true)
+        {
+            foreach (var instruction in instructions)
+            {
+                steps++;
+                current = instruction == 'L' ? lines[current].Left : lines[current].Right;
+
+                if (current == "ZZZ")
+                    break;
+            }
+
+            if (current == "ZZZ")
+                break;
+        }
+
+        Console.WriteLine(steps);
+    }
+
+    public static void Day08B()
+    {
+        var instructions = Console.ReadLine();
+        Console.ReadLine();
+
+        var lines = Read.StringBatch()
+            .Select(x => (x.Substring(0, 3), Left: x.Substring(7, 3), Right: x.Substring(12, 3)))
+            .ToDictionary(x => x.Item1, x => (x.Left, x.Right));
+
+        var current = lines.Keys.Where(x => x[2] == 'A').ToArray();
+        var steps = current.Select(x => Process(x, lines, instructions)).ToArray();
+
+        var result = Calc.LCM(steps);
+
+        Console.WriteLine(result);
+
+        static long Process(string current, Dictionary<string, (string Left, string Right)> lines, string instructions)
+        {
+            var steps = 0;
+            while (true)
+            {
+                foreach (var instruction in instructions)
+                {
+                    steps++;
+
+                    current = instruction == 'L' ? lines[current].Left : lines[current].Right;
+                    if (current[2] == 'Z')
+                        return steps;
+                }
+            }
+        }
+    }
+
+    /*
+    0 3 6 9 12 15
+    1 3 6 10 15 21
+    10 13 16 21 30 45
+
+    */
+    public static void Day09A()
+    {
+        var sums = new List<long>();
+
+        foreach (var batch in Read.HBatches<int>())
+        {
+            var stack = new List<int[]>() { batch };
+
+            while (true)
+            {
+                var current = stack.Last();
+                var diffs = current.Skip(1).Select((x, i) => x - current[i]).ToArray();
+
+                if (diffs.All(x => x == 0))
+                {
+                    sums.Add(stack.Select(x => x.Last()).Sum());
+                    break;
+                }
+
+                stack.Add(diffs);
+            }
+        }
+
+        foreach (var sum in sums)
+            Console.WriteLine(sum);
+
+        Console.WriteLine(sums.Sum());
+    }
+
+    public static void Day09B()
+    {
+        var sums = new List<long>();
+
+        foreach (var batch in Read.HBatches<int>())
+        {
+            var stack = new List<int[]>() { batch };
+
+            while (true)
+            {
+                var current = stack.Last();
+                var diffs = current.Skip(1).Select((x, i) => x - current[i]).ToArray();
+
+                if (diffs.All(x => x == 0))
+                {
+                    sums.Add(stack.Select((x, i) => i % 2 == 0 ? x.First() : -x.First()).Sum());
+                    break;
+                }
+
+                stack.Add(diffs);
+            }
+        }
+
+        foreach (var sum in sums)
+            Console.WriteLine(sum);
+
+        Console.WriteLine(sums.Sum());
+    }
+
+    /*
+7-F7-
+.FJ|7
+SJLL7
+|F--J
+LJ.LJ
+
+6
+
+| is a vertical pipe connecting north and south.
+- is a horizontal pipe connecting east and west.
+L is a 90-degree bend connecting north and east.
+J is a 90-degree bend connecting north and west.
+7 is a 90-degree bend connecting south and west.
+F is a 90-degree bend connecting south and east.
+. is ground; there is no pipe in this tile.
+S is the starting position of the animal;  */
+    public static void Day10A()
+    {
+        var input = Read.StringBatch().ToArray();
+
+        var current1 = input.Select((x, i) => new Day10Point(i, x.IndexOf('S'))).First(p => p.J >= 0);
+        var current2 = current1;
+
+        // 8 4 6 2
+        Console.WriteLine("Give me hint!");
+        Move(ref current1, Read.Int(), ref input);
+        Move(ref current2, Read.Int(), ref input);
+        var steps = 1;
+
+        while (true)
+        {
+            var direction = GetDirection(current1, input);
+            Move(ref current1, direction, ref input);
+
+            direction = GetDirection(current2, input);
+            Move(ref current2, direction, ref input);
+
+            steps++;
+
+            if (current1 == current2) break;
+        }
+
+        Console.WriteLine(steps);
+
+        static void Move(ref Day10Point current, int direction, ref string[] input)
+        {
+            var line = input[current.I]; // 5  2         01   *  34
+            input[current.I] = line.Substring(0, current.J) + "*" + line.Substring(current.J + 1, line.Length - current.J - 1);
+
+            current = new Day10Point(
+                current.I + direction switch { 8 => -1, 2 => 1, _ => 0, },
+                current.J + direction switch { 4 => -1, 6 => 1, _ => 0, });
+
+        }
+
+        static int GetDirection(Day10Point current, string[] input)
+        {
+            var now = input[current.I][current.J];
+
+            int up() => input[current.I - 1][current.J];
+            int down() => input[current.I + 1][current.J];
+            int left() => input[current.I][current.J - 1];
+            int right() => input[current.I][current.J + 1];
+
+            return now switch
+            {
+                '|' => up() != '*' ? 8 : 2,
+                '-' => left() != '*' ? 4 : 6,
+                'L' => up() != '*' ? 8 : 6,
+                'J' => up() != '*' ? 8 : 4,
+                '7' => left() != '*' ? 4 : 2,
+                'F' => right() != '*' ? 6 : 2,
+                _ => throw new Exception(),
+            };
+        }
+    }
+
+    public static void Day10B()
+    {
+        var input = Read.StringBatch().ToArray();
+
+        var start = input.Select((x, i) => new Day10Point(i, x.IndexOf('S'))).First(p => p.J >= 0);
+        var steps = new List<Day10Point>() { start, };
+
+        var original = input.Select((line, i) => line.Select((c, j) =>
+            new Day10BTrack(new Day10Point(i, j), c, c == '.' ? Day10BStatus.Unknown : Day10BStatus.OtherLine, null)).ToArray()).ToArray();
+        original[start.I][start.J] = original[start.I][start.J] with { Char = (char)Console.Read(), };
+
+        // 8 4 6 2
+        int direction = Read.Int();
+        var current = start;
+        var prev = current;
+        current = Move(current, direction, ref original);
+        steps.Add(current);
+
+        while (true)
+        {
+            direction = GetDirection(current, original, direction);
+            current = Move(current, direction, ref original);
+
+            /*Console.SetCursorPosition(0, 0);
+            foreach (var item in original)
+                Console.WriteLine(item.Select(x => x.Status == Status.Line ? '*' : x.Char).ToArray());
+            */
+            if (current == start) break;
+
+            steps.Add(current);
+        }
+
+        var totals = 0;
+        for (int i = 0; i < input.Length; i++)
+        {
+            var line = input[i];
+            for (int j = 0; j < line.Length; j++)
+            {
+                if (original[i][j].Status == Day10BStatus.Line) continue;
+
+                var borders = original[i].Take(j).Aggregate((Count: 0, Up: (bool?)null), Process);
+
+                if (borders.Up.HasValue) throw new Exception();
+
+                if (borders.Count % 1 != 0) throw new Exception();
+
+                totals += borders.Count % 2;
+
+                static (int, bool?) Process((int Count, bool? Up) state, Day10BTrack current)
+                {
+                    return current.Status == Day10BStatus.Line
+                        ? state.Up switch
+                        {
+                            null => current.Char switch
+                            {
+                                'F' => (state.Count, true),
+                                'L' => (state.Count, false),
+                                '|' => (state.Count + 1, null),
+                                _ => throw new Exception(),
+                            },
+                            true => current.Char switch
+                            {
+                                'J' => (state.Count + 1, null),
+                                '7' => (state.Count, null),
+                                '-' => state,
+                                _ => throw new Exception(),
+                            },
+                            false => current.Char switch
+                            {
+                                'J' => (state.Count, null),
+                                '7' => (state.Count + 1, null),
+                                '-' => state,
+                                _ => throw new Exception(),
+                            },
+                        }
+                        : state;
+                }
+            }
+        }
+
+        Console.WriteLine();
+        Console.WriteLine();
+        Console.WriteLine(totals);
+
+        Console.WriteLine();
+        Console.WriteLine();
+        Console.WriteLine();
+        foreach (var item in original)
+            Console.WriteLine(item.Select(x => x.Status == Day10BStatus.Line ? '*' : x.Char).ToArray());
+
+        static Day10Point Move(Day10Point current, int direction, ref Day10BTrack[][] input)
+        {
+            var track = input[current.I][current.J];
+            if (track.Status != Day10BStatus.Unknown && track.Status != Day10BStatus.OtherLine) throw new Exception();
+
+            var next = new Day10Point(
+                current.I + direction switch { 8 => -1, 2 => 1, _ => 0, },
+                current.J + direction switch { 4 => -1, 6 => 1, _ => 0, });
+
+            input[current.I][current.J] = track with { Status = Day10BStatus.Line, Next = (current, direction), };
+            return next;
+        }
+
+        static int GetDirection(Day10Point current, Day10BTrack[][] input, int from)
+        {
+            var now = input[current.I][current.J].Char;
+
+            bool up() => from == 2;
+            bool down() => from == 8;
+            bool left() => from == 6;
+            bool right() => from == 4;
+
+            return now switch
+            {
+                '|' => down() ? 8 : 2,
+                '-' => left() ? 6 : 4,
+                'L' => up() ? 6 : 8,
+                'J' => up() ? 4 : 8,
+                '7' => left() ? 2 : 4,
+                'F' => right() ? 2 : 6,
+                _ => throw new Exception(),
+            };
+        }
+    }
+
+    enum Day10BStatus
+    {
+        OtherLine,
+        Line,
+        Unknown,
+    }
+    private readonly record struct Day10BTrack(Day10Point Point, char Char, Day10BStatus Status, (Day10Point Point, int Direction)? Next);
+
+    public readonly record struct Day10Point(int I, int J);
+
+    public static void Current() // Day11A()
+    {
+        var text = Console.ReadLine();
+        Console.ReadLine();
+
         var sum1 = Read.LongBatch().Sum();
         Console.WriteLine(sum1);
 
@@ -605,6 +1167,8 @@ humidity-to-location map:
             all.Add(sum);
         }
         Console.WriteLine(all.OrderDescending().Take(3).Sum());
+
+        var input = Read.StringBatch().ToArray();
 
         var lines = new List<string>();
         foreach (var line in Read.StringBatch())
@@ -621,8 +1185,11 @@ humidity-to-location map:
         Console.WriteLine(new string(lines.Select(Enumerable.First).ToArray()));
     }
 
-    public static void CurrentSample() // Day08()
+    public static void CurrentSample() // Day11A()
     {
+        var text = Console.ReadLine();
+        Console.ReadLine();
+
         var sum1 = Read.LongBatch().Sum();
         Console.WriteLine(sum1);
 
@@ -634,6 +1201,8 @@ humidity-to-location map:
             all.Add(sum);
         }
         Console.WriteLine(all.OrderDescending().Take(3).Sum());
+
+        var input = Read.StringBatch().ToArray();
 
         var lines = new List<string>();
         foreach (var line in Read.StringBatch())
