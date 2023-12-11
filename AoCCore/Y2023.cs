@@ -1151,7 +1151,73 @@ S is the starting position of the animal;  */
 
     public readonly record struct Day10Point(int I, int J);
 
-    public static void Current() // Day11A()
+    public static void Day11A()
+    {
+        var input = Read.StringBatch().ToList();
+
+        for (int i = input.Count - 1; i >= 0; i--)
+        {
+            if (input[i].All(x => x == '.'))
+                input.Insert(i, input[i]);
+        }
+
+        var width = input[0].Length;
+        for (int j = width - 1; j >= 0; j--)
+        {
+            if (input.All(line => line[j] == '.'))
+            {
+                input = input.Select(line => line.Substring(0, j) + "." + line.Substring(j)).ToList();
+            }
+        }
+
+        var galaxies = input.SelectIndex()
+            .SelectMany(row => row.Value.SelectIndex().Select(c => (I: row.Index, J: c.Index, Char: c.Value)))
+            .Where(x => x.Char == '#')
+            .Select(x => (x.I, x.J))
+            .ToArray();
+
+        var total = 0;
+        foreach (var start in galaxies)
+        {
+            foreach (var end in galaxies)
+            {
+                var distance = Math.Abs(start.I - end.I) + Math.Abs(start.J - end.J);
+                total += distance;
+            }
+        }
+
+        Console.WriteLine(total / 2);
+    }
+
+    public static void Day11B()
+    {
+        var input = Read.StringBatch().ToList();
+
+        var rows = input.SelectIndex().Where(x => x.Value.All(x => x == '.')).Select(x => x.Index).ToArray();
+        var cols = Enumerable.Range(0, input[0].Length).Where(j => input.All(line => line[j] == '.')).ToArray();
+
+        var galaxies = input.SelectIndex()
+            .SelectMany(row => row.Value.SelectIndex().Select(c => (I: row.Index, J: c.Index, Char: c.Value)))
+            .Where(x => x.Char == '#')
+            .Select(x => (I: Expand(x.I, rows), J: Expand(x.J, cols)))
+            .ToArray();
+
+        var total = 0L;
+        foreach (var start in galaxies)
+        {
+            foreach (var end in galaxies)
+            {
+                var distance = Math.Abs(start.I - end.I) + Math.Abs(start.J - end.J);
+                total += distance;
+            }
+        }
+
+        Console.WriteLine(total / 2);
+
+        static long Expand(int i, int[] indexes) => i + (1000000 - 1) * indexes.Count(x => x < i);
+    }
+
+    public static void Current() // Day12A()
     {
         var text = Console.ReadLine();
         Console.ReadLine();
