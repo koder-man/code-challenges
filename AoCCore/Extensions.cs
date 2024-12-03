@@ -26,11 +26,6 @@ public static class Extensions
         }
     }
 
-    public static void P<T>(this T error)
-    {
-        Console.WriteLine(error);
-    }
-
     public static void P<T>(this T value, [CallerArgumentExpression(nameof(value))] string? message = null)
     {
         Console.WriteLine($"{message}: {value}");
@@ -48,4 +43,12 @@ public static class Extensions
         foreach (T value in values)
             value.P();
     }
+
+    public static T As<T>(this string input) where T : IParsable<T> => T.Parse(input, null);
+
+    public static int Int(this string input) => input.As<int>();
+
+    public static long Long(this string input) => input.As<long>();
+
+    public static string Join(this IEnumerable<string> input, string separator = ",") => string.Join(separator, input);
 }

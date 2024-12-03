@@ -1,5 +1,8 @@
 ﻿namespace AoCCore;
 
+/// <summary>
+/// GreatestCommonFactor and LeastCommonMultiple
+/// </summary>
 internal class Calc
 {
     public static long GCF(long a, long b)
