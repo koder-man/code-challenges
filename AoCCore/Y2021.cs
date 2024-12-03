@@ -1,4 +1,6 @@
-﻿namespace AoCCore;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace AoCCore;
 
 public static class Y2021
 {
@@ -7,7 +9,7 @@ public static class Y2021
         var previous = int.MaxValue;
         var count = 0;
         // Read.TryInt(out var next)
-        while (int.TryParse(Console.ReadLine(), out var next))
+        while (int.TryParse(Read.Line(), out var next))
         {
             if (next > previous)
             {
@@ -27,10 +29,10 @@ public static class Y2021
         var queue = new Queue<int>(4);
         for (var i = 0; i < 2; i++)
         {
-            queue.Enqueue(int.Parse(Console.ReadLine()));
+            queue.Enqueue(int.Parse(Read.Line()));
         }
 
-        while (int.TryParse(Console.ReadLine(), out var next))
+        while (int.TryParse(Read.Line(), out var next))
         {
             queue.Enqueue(next);
 
@@ -61,7 +63,7 @@ forward 2*/
 
         while (true)
         {
-            var input = Console.ReadLine().Split(' ');
+            var input = Read.Line().Split(' ');
             if (input.Length != 2)
             {
                 break;
@@ -104,7 +106,7 @@ forward 2*/
 
         while (true)
         {
-            var input = Console.ReadLine().Split(' ');
+            var input = Read.Line().Split(' ');
             if (input.Length != 2)
             {
                 break;
@@ -139,7 +141,7 @@ forward 2*/
         var counts = new int[Length];
 
         string line;
-        while ((line = Console.ReadLine()).Length > 0)
+        while ((line = Read.Line()).Length > 0)
         {
             for (var i = 0; i < Length; i++)
             {
@@ -165,7 +167,7 @@ forward 2*/
     {
         var items = new List<string>();
         string line;
-        while ((line = Console.ReadLine()).Length > 0)
+        while ((line = Read.Line()).Length > 0)
         {
             items.Add(line);
         }
@@ -209,9 +211,9 @@ forward 2*/
             cols = new Line[5];
         }
 
-        public static bool TryParse(out Board04A board)
+        public static bool TryParse([NotNullWhen(true)] out Board04A? board)
         {
-            var line = Console.ReadLine();
+            var line = Read.Line();
             if (line.Length == 0)
             {
                 board = null;
@@ -223,7 +225,7 @@ forward 2*/
             for (var i = 0; i < 5; i++)
             {
                 board.lines[i] = new Line(line.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse));
-                line = Console.ReadLine();
+                line = Read.Line();
             }
 
             for (var i = 0; i < 5; i++)
@@ -269,8 +271,8 @@ forward 2*/
     }
     public static void Day04A()
     {
-        var numbers = Console.ReadLine().Split(',').Select(int.Parse);
-        Console.ReadLine();
+        var numbers = Read.Line().Split(',').Select(int.Parse);
+        Read.Line();
 
         var boards = new List<Board04A>();
         while (Board04A.TryParse(out var board)) boards.Add(board);
@@ -293,8 +295,8 @@ forward 2*/
 
     public static void Day04B()
     {
-        var numbers = Console.ReadLine().Split(',').Select(int.Parse);
-        Console.ReadLine();
+        var numbers = Read.Line().Split(',').Select(int.Parse);
+        Read.Line();
 
         var boards = new List<Board04A>();
         while (Board04A.TryParse(out var board)) boards.Add(board);
@@ -340,7 +342,7 @@ forward 2*/
         var board = Enumerable.Repeat(1, Size).Select(_ => new int[Size]).ToArray();
 
         string line;
-        while ((line = Console.ReadLine()).Length > 0)
+        while ((line = Read.Line()).Length > 0)
         {
             var pair = line.Split("-> ");
             var p0 = Parse(pair[0]);
@@ -399,7 +401,7 @@ forward 2*/
         var board = Enumerable.Repeat(1, Size).Select(_ => new int[Size]).ToArray();
 
         string line;
-        while ((line = Console.ReadLine()).Length > 0)
+        while ((line = Read.Line()).Length > 0)
         {
             var pair = line.Split("-> ");
             var p0 = Parse(pair[0]);
@@ -437,7 +439,7 @@ forward 2*/
 
     public static void Day06A()
     {
-        var fish = Console.ReadLine().Split(',').Select(long.Parse).ToList();
+        var fish = Read.Line().Split(',').Select(long.Parse).ToList();
 
         for (var i = 0; i < 80; i++)
         {
@@ -465,7 +467,7 @@ forward 2*/
     {
         var fish = Enumerable.Range(0, 9).ToDictionary(x => x, _ => 0L);
 
-        foreach (var i in Console.ReadLine().Split(',').Select(int.Parse))
+        foreach (var i in Read.Line().Split(',').Select(int.Parse))
             fish[i]++;
 
         for (var i = 0; i < 256; i++)
@@ -488,7 +490,7 @@ forward 2*/
 
     public static void Day07A()
     {
-        var items = Console.ReadLine().Split(',').Select(int.Parse).ToArray();
+        var items = Read.Line().Split(',').Select(int.Parse).ToArray();
 
         var x1 = items.Min();
         var x2 = items.Max();
@@ -523,7 +525,7 @@ forward 2*/
 
     public static void Day07B()
     {
-        var items = Console.ReadLine().Split(',').Select(int.Parse).ToArray();
+        var items = Read.Line().Split(',').Select(int.Parse).ToArray();
 
         var x1 = items.Min();
         var x2 = items.Max();
@@ -558,7 +560,7 @@ forward 2*/
     {
         var count = 0;
         string line;
-        while ((line = Console.ReadLine()).Length > 0)
+        while ((line = Read.Line()).Length > 0)
         {
             count += line.Substring(61).Split(' ').Count(x => x.Length == 2 || x.Length == 3 || x.Length == 4 || x.Length == 7);
         }
@@ -570,7 +572,7 @@ forward 2*/
     {
         var sum = 0;
         string line;
-        while ((line = Console.ReadLine()).Length > 0)
+        while ((line = Read.Line()).Length > 0)
         {
             var dict = Decode(line.Substring(0, 58).Split(' '));
 
@@ -622,7 +624,7 @@ forward 2*/
         var lines = new List<int[]>();
 
         string line1;
-        while ((line1 = Console.ReadLine()).Length > 0)
+        while ((line1 = Read.Line()).Length > 0)
         {
             lines.Add(line1.Select(c => c - '0').Prepend(int.MaxValue).Append(int.MaxValue).ToArray()); ; ; ;
         }
@@ -657,13 +659,13 @@ forward 2*/
 
     class Group09B
     {
-        public List<Item09B> Items { get; set; }
+        public List<Item09B> Items { get; } = [];
     }
 
     class Item09B
     {
         public int Z { get; set; }
-        public Group09B Group { get; set; }
+        public Group09B? Group { get; set; }
     }
 
     public static void Day09B()
@@ -673,7 +675,7 @@ forward 2*/
         var groups = new HashSet<Group09B>();
 
         string line1;
-        while ((line1 = Console.ReadLine()).Length > 0)
+        while ((line1 = Read.Line()).Length > 0)
         {
             lines.Add(line1.Select(c => c - '0').Select(x => new Item09B() { Z = x, }).Prepend(border).Append(border).ToArray());
         }
@@ -695,7 +697,7 @@ forward 2*/
                 var left = lines[y][x - 1].Group;
                 var up = lines[y - 1][x].Group;
 
-                Group09B group;
+                Group09B? group;
                 if (left != null && up != null)
                 {
                     if (left != up)
@@ -712,10 +714,7 @@ forward 2*/
                     group = left ?? up;
                     if (group == null)
                     {
-                        group = new Group09B()
-                        {
-                            Items = new List<Item09B>(),
-                        };
+                        group = new Group09B();
                         groups.Add(group);
                     }
                 }
@@ -735,7 +734,7 @@ forward 2*/
     {
         var total = 0;
         string line;
-        while ((line = Console.ReadLine()).Length > 0)
+        while ((line = Read.Line()).Length > 0)
         {
             var commands = new Stack<char>();
             foreach (var c in line)
@@ -787,7 +786,7 @@ forward 2*/
     {
         var totals = new List<long>();
         string line;
-        while ((line = Console.ReadLine()).Length > 0)
+        while ((line = Read.Line()).Length > 0)
         {
             var commands = new Stack<char>();
             var corrupted = false;
@@ -855,7 +854,7 @@ forward 2*/
         var lines = new List<List<Flash11A>>();
 
         string line1;
-        while ((line1 = Console.ReadLine()).Length > 0)
+        while ((line1 = Read.Line()).Length > 0)
         {
             lines.Add(line1.Select(c => new Flash11A() { Energy = c - '0', }).ToList());
         }
@@ -925,7 +924,7 @@ forward 2*/
         var lines = new List<List<Flash11A>>();
 
         string line1;
-        while ((line1 = Console.ReadLine()).Length > 0)
+        while ((line1 = Read.Line()).Length > 0)
         {
             lines.Add(line1.Select(c => new Flash11A() { Energy = c - '0', }).ToList());
         }
@@ -1001,7 +1000,7 @@ forward 2*/
         var lines = new List<List<Flash11A>>();
 
         string line1;
-        while ((line1 = Console.ReadLine()).Length > 0)
+        while ((line1 = Read.Line()).Length > 0)
         {
             lines.Add(line1.Select(c => new Flash11A() { Energy = c - '0', }).ToList());
         }

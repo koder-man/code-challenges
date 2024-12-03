@@ -1,27 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace AoCCore;
 
 internal static class Read
 {
+    public static string Line()
+    {
+        return Console.ReadLine() ?? string.Empty;
+    }
+
     public static T Value<T>()
         where T : IParsable<T>
     {
-        return T.Parse(Console.ReadLine(), null);
+        return T.Parse(Line(), null);
     }
 
-    public static bool Try<T>(out T result)
+    public static bool Try<T>([NotNullWhen(true)] out T? result)
         where T : IParsable<T>
     {
-        return T.TryParse(Console.ReadLine(), null, out result);
+        return T.TryParse(Line(), null, out result);
     }
 
     public static IEnumerable<string> StringBatch()
     {
         string line;
-        while ((line = Console.ReadLine()).Length > 0)
+        while ((line = Line()).Length > 0)
         {
             yield return line;
         }
@@ -39,8 +42,8 @@ internal static class Read
         }
     }
 
-    public static IEnumerable<T> HBatch<T>() where T : IParsable<T> => Console.ReadLine().Split(' ').Select(x => T.Parse(x, null));
-    public static IEnumerable<T[]> HBatches<T>() where T : IParsable<T> => StringBatch().Select(row => row.Split(' ').Select(x => T.Parse(x, null)).ToArray());
+    public static IEnumerable<T> HBatch<T>(char separator = ' ') where T : IParsable<T> => Line().Split(separator, StringSplitOptions.RemoveEmptyEntries).Select(x => T.Parse(x, null));
+    public static IEnumerable<T[]> HBatches<T>(char separator = ' ') where T : IParsable<T> => StringBatch().Select(row => row.Split(separator, StringSplitOptions.RemoveEmptyEntries).Select(x => T.Parse(x, null)).ToArray());
 
     public static IEnumerable<T> Batch<T>() where T : IParsable<T> => StringBatch().Select(x => T.Parse(x, null));
 

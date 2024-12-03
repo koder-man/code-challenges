@@ -37,7 +37,7 @@ public static class Y2022
         var sum = 0;
 
         string line;
-        while ((line = Console.ReadLine()).Length > 0)
+        while ((line = Read.Line()).Length > 0)
         {
             var a = line[0];
             var b = line[2];
@@ -195,7 +195,7 @@ public static class Y2022
             }
         }
 
-        Console.ReadLine();
+        Read.Line();
 
         for (int i = 0; i < state.Length; i++)
         {
@@ -238,7 +238,7 @@ public static class Y2022
             }
         }
 
-        Console.ReadLine();
+        Read.Line();
 
         for (int i = 0; i < state.Length; i++)
         {
@@ -271,7 +271,7 @@ public static class Y2022
 
     public static void Day06A()
     {
-        var line = Console.ReadLine();
+        var line = Read.Line();
 
         var chars = new Queue<char>();
         for (var i = 0; i < 3; i++)
@@ -296,7 +296,7 @@ public static class Y2022
 
     public static void Day06B()
     {
-        var line = Console.ReadLine();
+        var line = Read.Line();
 
         var chars = new Queue<char>();
         for (var i = 0; i < 13; i++)
@@ -1239,23 +1239,23 @@ public static class Y2022
     {
         public int? Int { get; init; }
 
-        public List<Value> Values { get; init; }
-
-        public bool IsInt => Int.HasValue;
+        public List<Value> Values { get; init; } = new();
 
         public static Value Create(int value) => new() { Int = value, };
-        public static Value Create() => new() { Values = new(), };
+        public static Value Create() => new();
 
-        public int CompareTo(Value r)
+        public int CompareTo(Value? r)
         {
-            if (IsInt && r.IsInt) return Int.Value.CompareTo(r.Int.Value);
+            if (r == null) return 1;
 
-            return CompareList(IsInt ? new[] { this, } : Values, r.IsInt ? new[] { r, } : r.Values);
+            if (Int.HasValue && r.Int.HasValue == true) return Int.Value.CompareTo(r.Int.Value);
+
+            return CompareList(Int.HasValue ? new[] { this, } : Values, r.Int.HasValue ? new[] { r, } : r.Values);
         }
 
-        public override string ToString()
+        public override string? ToString()
         {
-            return IsInt ? Int.ToString() : $"[{string.Join(',', Values)}]";
+            return Int.HasValue ? Int.ToString() : $"[{string.Join(',', Values)}]";
         }
 
         public static int CompareList(IReadOnlyList<Value> l, IReadOnlyList<Value> r)
@@ -1713,7 +1713,7 @@ public static class Y2022
             new Shape(new Point[] { new(0, 0), new(1, 0), new(0, 1), new(1, 1),            }, 2, 'O'), // [] □
         };
 
-        var moves = Console.ReadLine();
+        var moves = Read.Line();
         // var chamber = new List<bool[]>();
         const int drawH = 50;
         const int width = 7;

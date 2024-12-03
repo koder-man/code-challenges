@@ -560,8 +560,8 @@ humidity-to-location map:
 
     public static void Day06A()
     {
-        var times = Console.ReadLine().Substring("Time:    ".Length).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
-        var distances = Console.ReadLine().Substring("Time:    ".Length).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
+        var times = Read.Line().Substring("Time:    ".Length).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
+        var distances = Read.Line().Substring("Time:    ".Length).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
 
         var ways = 1L;
 
@@ -580,8 +580,8 @@ humidity-to-location map:
 
     public static void Day06B()
     {
-        var time = long.Parse(Console.ReadLine().Substring("Time:    ".Length).Replace(" ", string.Empty));
-        var distance = long.Parse(Console.ReadLine().Substring("Time:    ".Length).Replace(" ", string.Empty));
+        var time = long.Parse(Read.Line().Substring("Time:    ".Length).Replace(" ", string.Empty));
+        var distance = long.Parse(Read.Line().Substring("Time:    ".Length).Replace(" ", string.Empty));
 
         var discriminant = Math.Sqrt(time * time - 4 * distance);
 
@@ -814,8 +814,8 @@ QQQJA 483
 
     public static void Day08A()
     {
-        var instructions = Console.ReadLine();
-        Console.ReadLine();
+        var instructions = Read.Line();
+        Read.Line();
 
         var lines = Read.StringBatch()
             .Select(x => (x.Substring(0, 3), Left: x.Substring(7, 3), Right: x.Substring(12, 3)))
@@ -843,8 +843,8 @@ QQQJA 483
 
     public static void Day08B()
     {
-        var instructions = Console.ReadLine();
-        Console.ReadLine();
+        var instructions = Read.Line();
+        Read.Line();
 
         var lines = Read.StringBatch()
             .Select(x => (x.Substring(0, 3), Left: x.Substring(7, 3), Right: x.Substring(12, 3)))
@@ -999,7 +999,7 @@ S is the starting position of the animal;  */
             var now = input[current.I][current.J];
 
             int up() => input[current.I - 1][current.J];
-            int down() => input[current.I + 1][current.J];
+            //// int down() => input[current.I + 1][current.J];
             int left() => input[current.I][current.J - 1];
             int right() => input[current.I][current.J + 1];
 
@@ -1219,8 +1219,8 @@ S is the starting position of the animal;  */
 
     public static void Current() // Day12A()
     {
-        var text = Console.ReadLine();
-        Console.ReadLine();
+        var text = Read.Line();
+        Read.Line();
 
         var sum1 = Read.LongBatch().Sum();
         Console.WriteLine(sum1);
@@ -1253,8 +1253,8 @@ S is the starting position of the animal;  */
 
     public static void CurrentSample() // Day11A()
     {
-        var text = Console.ReadLine();
-        Console.ReadLine();
+        var text = Read.Line();
+        Read.Line();
 
         var sum1 = Read.LongBatch().Sum();
         Console.WriteLine(sum1);

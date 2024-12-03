@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace AoCCore;
 
@@ -28,8 +26,26 @@ public static class Extensions
         }
     }
 
-    public static void P(this string error)
+    public static void P<T>(this T error)
     {
         Console.WriteLine(error);
+    }
+
+    public static void P<T>(this T value, [CallerArgumentExpression(nameof(value))] string? message = null)
+    {
+        Console.WriteLine($"{message}: {value}");
+    }
+
+    public static void P<T>(this IEnumerable<T> values)
+    {
+        foreach (T value in values)
+            value.P();
+    }
+
+    public static void P<T>(this IEnumerable<T> values, string message)
+    {
+        Console.WriteLine($"{message}:");
+        foreach (T value in values)
+            value.P();
     }
 }

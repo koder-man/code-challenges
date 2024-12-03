@@ -18,7 +18,7 @@ public static class Y2020
     public static void Day15a()
     {
         const int cnt = 2020;
-        var numbers = Console.ReadLine().Split(',').Select(Int32.Parse).ToList();
+        var numbers = Read.Line().Split(',').Select(int.Parse).ToList();
         numbers.Capacity = cnt;
 
         for (int i = numbers.Count; i < cnt; i++)
@@ -42,7 +42,7 @@ public static class Y2020
     public static void Day15b()
     {
         const int cnt = 30000000;
-        var input = Console.ReadLine().Split(',').Select(int.Parse);
+        var input = Read.Line().Split(',').Select(int.Parse);
         var numbers = input.Select((i, index) => (i, index)).ToDictionary(i => i.i, i => (Last: 0, Index: i.index));
         int lastNumber = input.Last();
 
@@ -103,18 +103,18 @@ public static class Y2020
             List<Field> fields = new List<Field>();
 
             string str;
-            while ((str = Console.ReadLine()).Length > 0)
+            while ((str = Read.Line()).Length > 0)
             {
                 fields.Add(new Field(str));
             }
 
-            Console.ReadLine(); // your ticket
-            Console.ReadLine(); // data
-            Console.ReadLine(); // empty line
-            Console.ReadLine(); // nerbay tickets
+            Read.Line(); // your ticket
+            Read.Line(); // data
+            Read.Line(); // empty line
+            Read.Line(); // nerbay tickets
 
             int sum = 0;
-            while ((str = Console.ReadLine()).Length > 0)
+            while ((str = Read.Line()).Length > 0)
             {
                 sum += str.Split(',')
                   .Select(int.Parse)
@@ -189,7 +189,7 @@ public static class Y2020
 
             private Range Range1;
             private Range Range2;
-            private HashSet<int> ValidIndexes;
+            private HashSet<int> ValidIndexes = null!;
         }
 
         public static void Current()
@@ -197,7 +197,7 @@ public static class Y2020
             List<Field> fields = new List<Field>();
 
             string str;
-            while ((str = Console.ReadLine()).Length > 0)
+            while ((str = Read.Line()).Length > 0)
             {
                 fields.Add(new Field(str));
             }
@@ -207,13 +207,13 @@ public static class Y2020
                 field.InitIndexes(fields.Count);
             }
 
-            Console.ReadLine(); // your ticket
-            var myData = Console.ReadLine().Split(',').Select(int.Parse).ToArray();
-            Console.ReadLine(); // data
-            Console.ReadLine(); // empty line
-            Console.ReadLine(); // nerbay tickets
+            Read.Line(); // your ticket
+            var myData = Read.Line().Split(',').Select(int.Parse).ToArray();
+            Read.Line(); // data
+            Read.Line(); // empty line
+            Read.Line(); // nerbay tickets
 
-            while ((str = Console.ReadLine()).Length > 0)
+            while ((str = Read.Line()).Length > 0)
             {
                 var nums = str.Split(',').Select(int.Parse).ToArray();
                 if (nums.Any(x => !fields.Any(field => field.InRange(x))))
@@ -264,7 +264,7 @@ public static class Y2020
 
         for (int i = 0; i < start; i++)
         {
-            foreach (var x in Console.ReadLine().SelectIndex())
+            foreach (var x in Read.Line().SelectIndex())
                 pocket[iter + x.Index, iter + i, iter] = x.Value == '#';
         }
 
@@ -319,7 +319,7 @@ public static class Y2020
 
         for (int i = 0; i < start; i++)
         {
-            foreach (var x in Console.ReadLine().SelectIndex())
+            foreach (var x in Read.Line().SelectIndex())
                 pocket[iter + x.Index, iter + i, iter, iter] = x.Value == '#';
         }
 
@@ -395,7 +395,7 @@ public static class Y2020
             long sum = 0;
 
             Stack<(long Value, Operator Operator)> Values = new();
-            for (string str; (str = Console.ReadLine()).Length > 0;)
+            for (string str; (str = Read.Line()).Length > 0;)
             {
                 Values.Push((0, Operator.Plus));
 
@@ -552,11 +552,11 @@ public static class Y2020
             long sum = 0;
             Stack<Expr> exprs = new();
 
-            for (string str; (str = Console.ReadLine()).Length > 0;)
+            for (string str; (str = Read.Line()).Length > 0;)
             {
                 exprs.Push(new Expr());
                 Operator oper = Operator.Undefined;
-                ConstExp constExpr = null;
+                ConstExp? constExpr = null;
 
                 foreach (char c in str)
                 {
@@ -672,7 +672,7 @@ public static class Y2020
         {
             Dictionary<int, IRule> rules = new();
 
-            for (string str; (str = Console.ReadLine()).Length > 0;)
+            for (string str; (str = Read.Line()).Length > 0;)
             {
                 int ind = str.IndexOf(':');
                 int id = int.Parse(str.AsSpan(0, ind));
@@ -716,7 +716,7 @@ public static class Y2020
             Regex regex = new Regex($"^{rules[0].ToRegex(rules)}$", RegexOptions.Compiled);
 
             int count = 0;
-            for (string str; (str = Console.ReadLine()).Length > 0;)
+            for (string str; (str = Read.Line()).Length > 0;)
             {
                 if (regex.IsMatch(str))
                     count++;
@@ -797,7 +797,7 @@ public static class Y2020
         {
             Dictionary<int, IRule> rules = new();
 
-            for (string str; (str = Console.ReadLine()).Length > 0;)
+            for (string str; (str = Read.Line()).Length > 0;)
             {
                 int ind = str.IndexOf(':');
                 int id = int.Parse(str.AsSpan(0, ind));
@@ -852,7 +852,7 @@ public static class Y2020
             }
 
             int count = 0;
-            for (string str; (str = Console.ReadLine()).Length > 0;)
+            for (string str; (str = Read.Line()).Length > 0;)
             {
                 if (regexes.Any(r => r.IsMatch(str)))
                     count++;
@@ -885,7 +885,7 @@ public static class Y2020
 
             for (int i = 0; i < Dim; i++)
             {
-                var line = Console.ReadLine();
+                var line = Read.Line();
 
                 if (i == 0 || i == Dim - 1)
                 {
@@ -908,11 +908,11 @@ public static class Y2020
     {
         List<Tile> tiles = new();
 
-        for (string str; (str = Console.ReadLine()).Length > 0;)
+        for (string str; (str = Read.Line()).Length > 0;)
         {
             tiles.Add(new Tile(int.Parse(str.AsSpan(5, str.Length - 6))));
 
-            Console.ReadLine();
+            Read.Line();
         }
 
         foreach (var tile in tiles)
