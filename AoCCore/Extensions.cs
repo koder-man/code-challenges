@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 
 namespace AoCCore;
@@ -51,4 +52,9 @@ public static class Extensions
     public static long Long(this string input) => input.As<long>();
 
     public static string Join(this IEnumerable<string> input, string separator = ",") => string.Join(separator, input);
+
+    public static MatchCollection Matches(this string input, [StringSyntax("Regex")] string pattern)
+    {
+        return new Regex(pattern).Matches(input);
+    }
 }

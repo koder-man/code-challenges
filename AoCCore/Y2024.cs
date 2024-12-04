@@ -129,8 +129,9 @@ xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
     */
     public static void Day03A()
     {
-        new Regex(@"mul\((\d+),(\d+)\)")
-            .Matches(Read.StringBatch().Join())
+        Read.StringBatch()
+            .Join()
+            .Matches(@"mul\((\d+),(\d+)\)")
             .Sum(m => m.Groups[1].Value.Long() * m.Groups[2].Value.Int())
             .P("Sum");
 
@@ -143,8 +144,9 @@ xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
     */
     public static void Day03B()
     {
-        new Regex(@"mul\((\d+),(\d+)\)|(do\(\))|(don't\(\))")
-            .Matches(string.Join(",", Read.StringBatch()))
+        Read.StringBatch()
+            .Join()
+            .Matches(@"mul\((\d+),(\d+)\)|(do\(\))|(don't\(\))")
             .Aggregate(
                 (Sum: 0L, Enabled: true),
                 (a, m) => m.Groups[3].Success
@@ -158,6 +160,118 @@ xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
             .P();
 
         // 80570939
+    }
+
+    /*
+MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
+
+    */
+    public static void Day04A()
+    {
+        var input = Read.StringBatch().ToArray();
+
+        var h = input.Length; if (h == 0) return;
+        var w = input[0].Length;
+
+        var count = 0;
+
+        for (int i = 0; i < h; i++)
+        {
+            for (int j = 0; j < w; j++)
+            {
+                if (input[i][j] != 'X')
+                    continue;
+
+                if (All(1, 0)) count++;     // D
+                if (All(1, 1)) count++;     // DR
+                if (All(0, 1)) count++;     //  R
+                if (All(-1, 1)) count++;    // UR
+                if (All(-1, 0)) count++;    // U
+                if (All(-1, -1)) count++;   // UL
+                if (All(0, -1)) count++;    //  L
+                if (All(1, -1)) count++;    // DL
+
+                bool All(int y, int x)
+                {
+                    return Check(1 * y, 1 * x, 'M')
+                        && Check(2 * y, 2 * x, 'A')
+                        && Check(3 * y, 3 * x, 'S');
+                }
+
+                bool Check(int y, int x, char c)
+                {
+                    return i + y >= 0
+                        && i + y < h
+                        && j + x >= 0
+                        && j + x < w
+                        && input[i + y][j + x] == c;
+                }
+            }
+        }
+
+        count.P();
+    }
+
+    public static void Day04B()
+    {
+        var input = Read.StringBatch().ToArray();
+
+        var h = input.Length; if (h == 0) return;
+        var w = input[0].Length;
+
+        var count = 0;
+
+        for (int i = 0; i < h; i++)
+        {
+            for (int j = 0; j < w; j++)
+            {
+                if (input[i][j] != 'M')
+                    continue;
+
+                // if (All(1, 0)) count++;     // D
+                if (All(1, 1)) count++;     // DR
+                // if (All(0, 1)) count++;     //  R
+                if (All(-1, 1)) count++;    // UR
+                // if (All(-1, 0)) count++;    // U
+                if (All(-1, -1)) count++;   // UL
+                // if (All(0, -1)) count++;    //  L
+                if (All(1, -1)) count++;    // DL
+
+                bool All(int y, int x)
+                {
+                    return Check(1 * y, 1 * x, 'A')
+                        && Check(2 * y, 2 * x, 'S')
+                        &&
+                        (
+                            Check(2 * y, 0 * x, 'M')
+                            && Check(0 * y, 2 * x, 'S')
+                        ||
+                            Check(2 * y, 0 * x, 'S')
+                            && Check(0 * y, 2 * x, 'M')
+                        );
+                }
+
+                bool Check(int y, int x, char c)
+                {
+                    return i + y >= 0
+                        && i + y < h
+                        && j + x >= 0
+                        && j + x < w
+                        && input[i + y][j + x] == c;
+                }
+            }
+        }
+
+        (count / 2).P();
     }
 
     public static void Current() // Day05A()
