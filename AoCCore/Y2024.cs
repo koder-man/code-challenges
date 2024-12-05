@@ -1,4 +1,6 @@
-﻿namespace AoCCore;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace AoCCore;
 
 public static class Y2024
 {
@@ -274,7 +276,166 @@ MXMXAXMASX
         (count / 2).P();
     }
 
-    public static void Current() // Day05A()
+    /*
+47|53
+97|13
+97|61
+97|47
+75|29
+61|13
+75|53
+29|13
+97|29
+53|29
+61|53
+97|53
+61|29
+47|13
+75|47
+97|75
+47|61
+75|61
+47|29
+75|13
+53|13
+
+75,47,61,53,29
+97,61,53,29,13
+75,29,13
+75,97,47,61,53
+61,13,29
+97,13,75,29,47
+
+    */
+    public static void Day05A()
+    {
+        Dictionary<int, HashSet<int>> orderPagesAfter = [];
+        Dictionary<int, HashSet<int>> orderPagesBefore = [];
+
+        foreach (var rule in Read.HBatches<int>('|'))
+        {
+            if (!orderPagesAfter.TryAdd(rule[0], [rule[1]]))
+                orderPagesAfter[rule[0]].Add(rule[1]);
+
+            if (!orderPagesBefore.TryAdd(rule[1], [rule[0]]))
+                orderPagesBefore[rule[1]].Add(rule[0]);
+        }
+
+        var sum = 0;
+        foreach (var update in Read.HBatches<int>(','))
+        {
+            if (IsValid(update, orderPagesAfter, orderPagesBefore)) sum += update[update.Length / 2];
+        }
+
+        sum.P();
+
+        static bool IsValid(int[] update, Dictionary<int, HashSet<int>> orderPagesAfter, Dictionary<int, HashSet<int>> orderPagesBefore)
+        {
+            for (int i = 0; i < update.Length; i++)
+            {
+                int page = update[i];
+
+                if (orderPagesAfter.TryGetValue(page, out var pagesAfter))
+                {
+                    for (int j = i + 1; j < update.Length; j++)
+                    {
+                        if (!pagesAfter.Contains(update[j]))
+                            return false;
+                    }
+                }
+
+                if (orderPagesBefore.TryGetValue(page, out var pagesBefore))
+                {
+                    for (int j = 0; j < i; j++)
+                    {
+                        if (!pagesBefore.Contains(update[j]))
+                            return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+    }
+
+    public static void Day05B()
+    {
+        Dictionary<int, HashSet<int>> orderPagesAfter = new();
+        Dictionary<int, HashSet<int>> orderPagesBefore = new();
+
+        foreach (var rule in Read.HBatches<int>('|'))
+        {
+            if (!orderPagesAfter.TryAdd(rule[0], [rule[1]]))
+                orderPagesAfter[rule[0]].Add(rule[1]);
+
+            if (!orderPagesBefore.TryAdd(rule[1], [rule[0]]))
+                orderPagesBefore[rule[1]].Add(rule[0]);
+        }
+
+        var sum = 0;
+        foreach (var update in Read.HBatches<int>(','))
+        {
+            if (!IsValid(update, orderPagesAfter, orderPagesBefore, out var tempFix))
+            {
+                var newUpdate = tempFix;
+                while (!IsValid(newUpdate, orderPagesAfter, orderPagesBefore, out tempFix))
+                {
+                    newUpdate = tempFix;
+                }
+
+                sum += newUpdate[newUpdate.Length / 2];
+            }
+        }
+
+        sum.P();
+
+        static bool IsValid(int[] update, Dictionary<int, HashSet<int>> orderPagesAfter, Dictionary<int, HashSet<int>> orderPagesBefore, [NotNullWhen(false)] out int[]? updated)
+        {
+            for (int i = 0; i < update.Length; i++)
+            {
+                int page = update[i];
+
+                if (orderPagesAfter.TryGetValue(page, out var pagesAfter))
+                {
+                    foreach (var pageAfter in pagesAfter)
+                    {
+                        for (int j = 0; j < i; j++)
+                        {
+                            if (update[j] == pageAfter)
+                            {
+                                updated = update.ToArray();
+                                updated[j] = update[i];
+                                updated[i] = update[j];
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                if (orderPagesBefore.TryGetValue(page, out var pagesBefore))
+                {
+                    foreach (var pageBefore in pagesBefore)
+                    {
+                        for (int j = i + 1; j < update.Length; j++)
+                        {
+                            if (update[j] == pageBefore)
+                            {
+                                updated = update.ToArray();
+                                updated[j] = update[i];
+                                updated[i] = update[j];
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            updated = null;
+            return true;
+        }
+    }
+
+    public static void Current() // Day06A()
     {
     }
 }
