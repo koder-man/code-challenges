@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 
 namespace AoCCore;
 
@@ -435,7 +436,161 @@ MXMXAXMASX
         }
     }
 
-    public static void Current() // Day06A()
+    /*
+....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#...
+
+    */
+    private struct Guard
     {
+        public Point Point { get; set; }
+        public Direction Direction { get; set; }
+    }
+    enum Direction { Up, Down, Left, Right }
+    public static void Day06A()
+    {
+        var map1 = Read.StringBatch().ToArray();
+        if (map1.Length == 0) return;
+        var h = map1.Length;
+        var w = map1[0].Length;
+
+        var guard = map1.SelectIndex().Select(x => (x.Index, x.Value.IndexOf('^'))).Where(x => x.Item2 >= 0).Select(x => new Guard() { Point = new(x.Index, x.Item2), }).First();
+        var map = map1.Select(x => x.ToArray()).ToArray();
+
+        while (true)
+        {
+            map[guard.Point.X][guard.Point.Y] = 'X';
+
+            var offset = Next(guard.Direction);
+            var next = new Point(guard.Point.X + offset.X, guard.Point.Y + offset.Y);
+
+            if (next.X < 0
+                || next.Y < 0
+                || next.X >= h
+                || next.Y >= w)
+                break;
+
+            if (map[next.X][next.Y] == '#')
+            {
+                guard.Direction = New(guard.Direction);
+                continue;
+            }
+
+            guard.Point = next;
+        }
+
+        map.Sum(x => x.Count(p => p == 'X')).P();
+
+        static Point Next(Direction direction) => direction switch
+        {
+            Direction.Up => new(-1, 0),
+            Direction.Down => new(1, 0),
+            Direction.Left => new(0, -1),
+            Direction.Right => new(0, 1),
+            _ => new(0, 0),
+        };
+
+        static Direction New(Direction direction) => direction switch
+        {
+            Direction.Up => Direction.Right,
+            Direction.Down => Direction.Left,
+            Direction.Left => Direction.Up,
+            Direction.Right => Direction.Down,
+            _ => Direction.Up,
+        };
+    }
+
+    public static void Day06B()
+    {
+        var map1 = Read.StringBatch().ToArray();
+        if (map1.Length == 0) return;
+        var h = map1.Length;
+        var w = map1[0].Length;
+
+        var guard = map1.SelectIndex().Select(x => (x.Index, x.Value.IndexOf('^'))).Where(x => x.Item2 >= 0).Select(x => new Guard() { Point = new(x.Index, x.Item2), }).First();
+
+        var cnt = 0;
+        for (int i = 0; i < h; i++)
+        {
+            for (int j = 0; j < w; j++)
+            {
+                if ((h, i) == (guard.Point.X, guard.Point.Y)) continue;
+
+                if (IsInLoop(map1, guard, i, j))
+                    cnt++;
+            }
+        }
+
+        cnt.P();
+
+        static bool IsInLoop(string[] map1, Guard guard, int x, int y)
+        {
+            var h = map1.Length;
+            var w = map1[0].Length;
+
+            var map = map1.Select(x => x.ToArray()).ToArray();
+            map[x][y] = '#';
+
+            while (true)
+            {
+                if (map[guard.Point.X][guard.Point.Y] <= 16
+                    && (map[guard.Point.X][guard.Point.Y] & (1 << (int)guard.Direction)) != 0) return true;
+
+                if (map[guard.Point.X][guard.Point.Y] >= 16)
+                    map[guard.Point.X][guard.Point.Y] = (char)0;
+                map[guard.Point.X][guard.Point.Y] |= (char)(1 << (int)guard.Direction);
+
+                var offset = Next(guard.Direction);
+                var next = new Point(guard.Point.X + offset.X, guard.Point.Y + offset.Y);
+
+                if (next.X < 0
+                    || next.Y < 0
+                    || next.X >= h
+                    || next.Y >= w)
+                    return false;
+
+                if (map[next.X][next.Y] == '#')
+                {
+                    guard.Direction = New(guard.Direction);
+                    continue;
+                }
+
+                guard.Point = next;
+            }
+
+            static Point Next(Direction direction) => direction switch
+            {
+                Direction.Up => new(-1, 0),
+                Direction.Down => new(1, 0),
+                Direction.Left => new(0, -1),
+                Direction.Right => new(0, 1),
+                _ => new(0, 0),
+            };
+
+            static Direction New(Direction direction) => direction switch
+            {
+                Direction.Up => Direction.Right,
+                Direction.Down => Direction.Left,
+                Direction.Left => Direction.Up,
+                Direction.Right => Direction.Down,
+                _ => Direction.Up,
+            };
+        }
+    }
+
+    /*
+
+    */
+    public static void Current() // Day07A()
+    {
+
     }
 }
