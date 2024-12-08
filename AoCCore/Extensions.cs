@@ -6,6 +6,20 @@ namespace AoCCore;
 
 public static class Extensions
 {
+    public static bool DebugOn = false;
+
+    public static T DebugLine<T>(this T value)
+    {
+        if (DebugOn) Console.WriteLine(value);
+        return value;
+    }
+
+    public static T Debug<T>(this T value)
+    {
+        if (DebugOn) Console.Write(value);
+        return value;
+    }
+
     public static IEnumerable<(TSource Value, int Index)> SelectIndex<TSource>(this IEnumerable<TSource> source)
     {
         return source.Select((x, i) => (x, i));

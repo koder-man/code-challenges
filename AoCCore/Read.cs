@@ -1,13 +1,41 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AoCCore;
 
 internal static class Read
 {
+    public static int Day = DateTime.Today.Day;
+    public static string SubSample = string.Empty;
+
+    private static IEnumerator<string> enumerator = new ConsoleEnumerator();
+
     /// <inheritdoc cref="Console.ReadLine"/>
     public static string Line()
     {
-        return Console.ReadLine() ?? string.Empty;
+        if (enumerator.MoveNext())
+        {
+            if (enumerator is ConsoleEnumerator)
+            {
+                if (enumerator.Current == "o")
+                {
+                    enumerator = new StreamEnumerator(Data.Read(Day));
+                    return Line();
+                }
+                if (enumerator.Current == "s")
+                {
+                    enumerator = new StreamEnumerator(File.OpenRead($"SampleData/Day{Day:D2}{SubSample}.txt"));
+                    return Line();
+                }
+            }
+
+            return enumerator.Current;
+        }
+
+        enumerator.Dispose();
+        enumerator = new ConsoleEnumerator();
+
+        return Line();
     }
 
     /// <summary>
@@ -202,4 +230,53 @@ internal static class Read
     /// </code>
     /// </summary>
     public static IEnumerable<long[]> LongBatches() => Batches<long>();
+
+    private class ConsoleEnumerator : IEnumerator<string>
+    {
+        public string Current { get; private set; } = string.Empty;
+
+        object IEnumerator.Current => Current;
+
+        public void Dispose()
+        {
+        }
+
+        public bool MoveNext()
+        {
+            Current = Console.ReadLine() ?? string.Empty;
+            return true;
+        }
+
+        public void Reset()
+        {
+        }
+    }
+
+    private class StreamEnumerator(Stream input) : IEnumerator<string>
+    {
+        private readonly StreamReader streamReader = new(input);
+
+        public string Current { get; private set; } = string.Empty;
+
+        object IEnumerator.Current => Current;
+
+        public void Dispose()
+        {
+            streamReader.Dispose();
+        }
+
+        public bool MoveNext()
+        {
+            string? line = streamReader.ReadLine();
+            Current = line ?? string.Empty;
+            Console.WriteLine(line);
+
+            return line != null;
+        }
+
+        public void Reset()
+        {
+            input.Position = 0;
+        }
+    }
 }
