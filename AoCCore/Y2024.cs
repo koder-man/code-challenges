@@ -671,6 +671,124 @@ MXMXAXMASX
         }
     }
 
+    private record class Node(char Value)
+    {
+        public bool IsAntinode { get; set; }
+        public bool IsAntena => char.IsLetterOrDigit(Value);
+    }
+    public static void Day08A()
+    {
+        Dictionary<char, List<Dot>> frequencies = new();
+
+        var map = Read.StringBatch()
+            .Select(row => row.Select(x => new Node(x)).ToArray())
+            .ToArray();
+
+        var h = map.Length;
+        if (h == 0) return;
+        var w = map[0].Length;
+
+        foreach (var row in map.SelectIndex())
+        {
+            foreach (var point in row.Value.SelectIndex().Where(p => char.IsLetterOrDigit(p.Value.Value)))
+            {
+                frequencies.TryAdd(point.Value.Value, []);
+                frequencies[point.Value.Value].Add(new(row.Index, point.Index));
+            }
+        }
+
+        foreach (var frequency in frequencies)
+        {
+            for (int i = 0; i < frequency.Value.Count; i++)
+            {
+                var a1 = frequency.Value[i];
+
+                for (int j = i + 1; j < frequency.Value.Count; j++)
+                {
+                    var a2 = frequency.Value[j];
+
+                    Mark(2 * a1 - a2);
+                    Mark(2 * a2 - a1);
+
+                    void Mark(Dot node)
+                    {
+                        if (node.D < 0
+                            || node.R < 0
+                            || node.D >= h
+                            || node.R >= w)
+                            return;
+
+                        map[node.D][node.R].IsAntinode = true;
+                    }
+                }
+            }
+        }
+
+        map.Sum(row => row.Count(c => c.IsAntinode)).P();
+
+        // 327
+    }
+
+    public static void Day08B()
+    {
+        Dictionary<char, List<Dot>> frequencies = new();
+
+        var map = Read.StringBatch()
+            .Select(row => row.Select(x => new Node(x)).ToArray())
+            .ToArray();
+
+        var h = map.Length;
+        if (h == 0) return;
+        var w = map[0].Length;
+
+        foreach (var row in map.SelectIndex())
+        {
+            foreach (var point in row.Value.SelectIndex().Where(p => char.IsLetterOrDigit(p.Value.Value)))
+            {
+                frequencies.TryAdd(point.Value.Value, []);
+                frequencies[point.Value.Value].Add(new(row.Index, point.Index));
+            }
+        }
+
+        foreach (var frequency in frequencies)
+        {
+            for (int i = 0; i < frequency.Value.Count; i++)
+            {
+                var a1 = frequency.Value[i];
+
+                for (int j = i + 1; j < frequency.Value.Count; j++)
+                {
+                    var a2 = frequency.Value[j];
+
+                    int mul = 1;
+                    while (Mark(a1, a2, mul++)) ;
+                    mul = 1;
+                    while (Mark(a2, a1, mul++)) ;
+
+                    bool Mark(Dot a1, Dot a2, int mul)
+                    {
+                        Dot node = a1 - mul * (a2 - a1);
+
+                        if (node.D < 0
+                            || node.R < 0
+                            || node.D >= h
+                            || node.R >= w)
+                            return false;
+
+                        map[node.D][node.R].IsAntinode = true;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        //// foreach (var row in map) Console.WriteLine(row.Select(x => x.IsAntinode ? '#' : x.Value).ToArray());
+
+        map.Sum(row => row.Count(c => c.IsAntinode || c.IsAntena)).P();
+
+        // 1233
+    }
+
     public static void Current() // Day09A()
     {
 
