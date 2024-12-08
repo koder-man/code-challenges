@@ -587,9 +587,91 @@ MXMXAXMASX
     }
 
     /*
+190: 10 19
+3267: 81 40 27
+83: 17 5
+156: 15 6
+7290: 6 8 6 15
+161011: 16 10 13
+192: 17 8 14
+21037: 9 7 18 13
+292: 11 6 16 20
 
     */
-    public static void Current() // Day07A()
+    private readonly record struct Equation(long Result, long[] Values);
+    public static void Day07A()
+    {
+        Read.StringBatch()
+            .Select(x => x.Split(' '))
+            .Select(x => new Equation(x[0][..^1].Long(), x.Skip(1).Select(v => v.Long()).ToArray()))
+            .Where(IsValid)
+            .Sum(x => x.Result)
+            .P();
+
+        // 1611660863222
+        static bool IsValid(Equation equation)
+        {
+            return Execute(equation, 1, equation.Values[0]);
+
+            static bool Execute(Equation equation, int position, long result)
+            {
+                if (position == equation.Values.Length)
+                {
+                    return result == equation.Result;
+                }
+
+                if (result > equation.Result)
+                {
+                    return false;
+                }
+
+                return Execute(equation, position + 1, Mul(result, equation.Values[position]))
+                    || Execute(equation, position + 1, Add(result, equation.Values[position]));
+            }
+
+            static long Mul(long left, long right) => left * right;
+            static long Add(long left, long right) => left + right;
+        }
+    }
+
+    public static void Day07B()
+    {
+        Read.StringBatch()
+            .Select(x => x.Split(' '))
+            .Select(x => new Equation(x[0][..^1].Long(), x.Skip(1).Select(v => v.Long()).ToArray()))
+            .Where(IsValid)
+            .Sum(x => x.Result)
+            .P();
+
+        // 945341732469724
+        static bool IsValid(Equation equation)
+        {
+            return Execute(equation, 1, equation.Values[0]);
+
+            static bool Execute(Equation equation, int position, long result)
+            {
+                if (position == equation.Values.Length)
+                {
+                    return result == equation.Result;
+                }
+
+                if (result > equation.Result)
+                {
+                    return false;
+                }
+
+                return Execute(equation, position + 1, Con(result, equation.Values[position]))
+                    || Execute(equation, position + 1, Mul(result, equation.Values[position]))
+                    || Execute(equation, position + 1, Add(result, equation.Values[position]));
+            }
+
+            static long Con(long left, long right) => $"{left}{right}".Long();
+            static long Mul(long left, long right) => left * right;
+            static long Add(long left, long right) => left + right;
+        }
+    }
+
+    public static void Current() // Day09A()
     {
 
     }
