@@ -789,7 +789,83 @@ MXMXAXMASX
         // 1233
     }
 
-    public static void Current() // Day09A()
+    // 2333133121414131402
+    public static void Day09A()
+    {
+        var input = Read.Line().Select(x => x - '0');
+
+        var map = input.SelectIndex().Select(x => Enumerable.Repeat(x.Index % 2 == 0 ? x.Index / 2 : -1, x.Value).ToArray()).SelectMany(x => x).ToArray();
+
+        int i = -1;
+        int j = map.Length;
+
+        while (++i < j)
+        {
+            if (map[i] != -1) continue;
+
+            while (map[--j] == -1) continue;
+
+            map[i] = map[j];
+            map[j] = -1;
+        }
+
+        map.SelectIndex().Where(x => x.Value != -1).Sum(x => (long)x.Index * x.Value).P();
+    }
+
+    public static void Day09B()
+    {
+        var input = Read.Line().Select(x => x - '0').ToArray();
+
+        var map = input.SelectIndex().Select(x => Enumerable.Repeat(x.Index % 2 == 0 ? x.Index / 2 : -1, x.Value).ToArray()).SelectMany(x => x).ToArray();
+        List<(int Position, int Size)> freeMap = [];
+
+        int position = 0;
+        for (int k = 0; k < input.Length; k++)
+        {
+            if (k % 2 != 0)
+            {
+                freeMap.Add((position, input[k]));
+            }
+
+            position += input[k];
+        }
+
+        int backLocation = map.Length;
+        for (int j = input.Length - 1; j >= 0; j--)
+        {
+            backLocation -= input[j];
+            if (j % 2 != 0) continue;
+
+            var size = input[j];
+
+            for (int k = 0; k < freeMap.Count; k++)
+            {
+                var location = freeMap[k].Position;
+
+                if (location >= backLocation) break;
+                if (freeMap[k].Size < size) continue;
+
+                for (int index = 0; index < size; index++)
+                {
+                    if (map[location + index] != -1) throw new Exception();
+                    if (map[backLocation + index] == -1) throw new Exception();
+
+                    map[location + index] = j / 2;
+                    map[backLocation + index] = -1;
+                }
+
+                freeMap[k] = (location + size, freeMap[k].Size - size);
+
+                break;
+            }
+        }
+
+        map.SelectIndex().Where(x => x.Value != -1).Sum(x => (long)x.Index * x.Value).P();
+
+        // 6373055193464
+    }
+
+    public static void Current() // Day10A()
     {
 
     }
